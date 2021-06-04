@@ -1,7 +1,7 @@
 ---
 title: 'Character Lab & Penn: Introduction to R'
-author: "Ben Manning"
-date: "August 21, 2018"
+author: "Benhamin Manning"
+date: "June 1, 2021"
 output:
   html_document:
     theme: cerulean
@@ -13,7 +13,6 @@ output:
 
 
 **Introduction to Statistical Computing with R**
-
 
 Based on notes by Paul Thibodeau (2009) and revisions by the Psych 252 instructors in 2010 and 2011
 
@@ -27,40 +26,32 @@ Adapted in summer 2018 for short RA tutorial by Camilla Griffiths & Juan Ospina.
 
 Adapted, revised, and added upon by Chayce Baldwin fall 2018 for RSC R workshops
 
-Adapted, revised, and added upon by Benjamin Manning spring 2021 for psych 399 and new character lab employees
+Aaggresively and comically dapted, revised, and added upon by Benjamin Manning spring 2021 for psych 399 and new character lab employees
 
 *If you haven't already installed R, it is available [here](http://cran.us.r-project.org/). Then, [download R Studio](https://www.rstudio.com/products/rstudio/download/).*
 
-Brief notes about learning R
-============================
-
-R is a programming language that is specifically designed for statistical computation. It has many appealing features: it is powerful, flexible, and widely used in the statistical community. The aspects that make R so powerful and flexible, however, contribute to a learning curve that is relatively steeper than what you might find in point-and-click packages like SPSS. The aim of this tutorial is to provide a general introduction to interacting with R that will reduce the feelings of frustration and helplessness that can emerge early in ones relationship with it. Although this tutorial doesn't assume any preexisting knowledge, if you've had no experience with computer programming there may be some parts of it that are confusing or lack a particularly deep meaning. Try your best to understand them now, but you will also likely benefit from returning to the tutorial periodically as you become more comfortable.
-
-The most important skill to cultivate up front is the ability to help yourself when you are stuck. Fortunately, R is pretty helpful in this regard. R is what's known as an *interpreted language*, which basically means that there is a console you type commands into and get immediate feedback on them. Do this liberally as you work though the tutorial and the early class exercises, making small modifications to the examples we provide until you feel like you really understand what's going on.
-
-The console is also your gateway to the built-in help functionality. Almost all R functions (more later on what those are) have help files built in that will provide you with useful information about what those functions do and how to use them. You find this by typing `help(function)` (or `?function`), where I am using "function" as a stand-in for the name you actually want to know about. It's important to read these files closely the first time you encounter a function, but it's *also* (possibly more) important to refer back to them frequently. I read once that a prominent distinction between an experienced programmer and a novice is the longer latency for the novice to look up the help for something confusing (but the direction of causality is not clear!). If you have a sense for what you want to do, but don't know or can't remember the exact function that will do it, you can search through the help files for a term with two question marks (e.g. `??regression`).
-
-Of course, the internet is also a useful resource. Because of its name, it can be a little annoying to google for help with R. A useful resource, in my opinion, is the [stackoverflow](http://stackoverflow.com/) website. Because this is a general-purpose resource for programming help, it will be useful to use the R tag (`[R]`) in your queries. A related resource is the [statistics stackexchange](http://stats.stackexchange.com/), which is like Stack Overflow but focused more on the underlying statistical issues.
-
-Finally, a note on errors. Novice and expert programmers alike will frequently run into errors in their R code. When this happens, processing will halt and an error message will be printed to the console. This is usually more frustrating for the novice, as the error often occurs deep within some function and the message bears no direct correspondence to what they were trying to do. A common beginner mistake is to conclude that the error message is gibberish and resign oneself to woe and dismay. It's important to resist this urge; even if the error message is not immediately informative, it is intended to precisely convey some piece of information, and usually understanding what this information is will be the key to solving the problem.
-
-Getting started: Using RStudio and R Markdowns
-----------------------------------------------
-
-How are R and RStudio different? RStudio is an interface that lays atop the base program R and is more user-friendly. R, on it's own, is only a console where you can type and run code. RStudio has this *Console* pane, in addition to an *Environment* pane where you can see all the variables and datasets you've saved in your R session, a *Viewer*  pane where you can access your files, view your plots, access your packages, and get help, and a *Source* pane where you can create R Markdown documents. 
-
-What is an R Markdown document? This is the main kind of document that I use in RStudio, and it's the primary advantage of RStudio over base R console. R Markdown allows you to create a file with a mix of R code and regular text, which is useful if you want to have explanations of your code alongside the code itself. This document, for example, is an R Markdown document. It is also useful because you can export your R Markdown file to an html page or a pdf, which comes in handy when you want to share your code or a report of your analyses to someone who doesn't have R. If you're interested in learning more about the functionality of R Markdown, you can visit [this webpage](https://rmarkdown.rstudio.com/lesson-1.html). Also, out of the goodness of their hearts, the team at RStudio literally made a cheat sheet for R Markdowns. [Check it out](https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf). Not only that, they have made cheat sheets for a lot of other things as well...We'll get into those later.
-
 # Basic interaction with the R console
 
+HEYYYYYY. Welcome to R! I'm Ben (imagine a siri like voice reading this to you in your head....) and I will be introducing to the super cool program language that is R! R is built on C++ which you might have heard of, and is especially useful for people who want to do statistical analysis without dealing with annoying coding stuff from lower languages. If you have some experience with R and coding already, some of this is going to be exceedingly simple. Hopefully, it will still be useful! As you going through this is going to be hard! Learning to code is like learning a language. But just remember, that's all it is! You don't need to be a quantitative genius or even good at math :). Alright, let's go! You got this!
+
+Let's start with a joke!
+
+What does the statistician pirate say to his crew in the morning?
+
+How RRRRRRRR you doing??????!!!!!
+
+Alright, that was cringe worthy and your probably considering dropping this class. Don't do that - I shall redeem myself!
+
+To start off, click the little green arrow (pointing to the right) in the box below (it's a slightly different background and we will call it a code **chunk**) with install.packages. Then, just keep reading and following instructions!
+
+
 ```{r install packages for later}
-#install.packages("psych", "doBy", "tidyverse") #Once downloaded, comment out
+install.packages("psych", "doBy", "tidyverse") #Once downloaded, comment out
 ```
 
+At its least useful, you can treat R like a calculator for basic computations. Just type some mathematical expression into your code **chunk**, and the result will be displayed in the console. A **chunk** is designated by starting with ``` ```{r}``` and ending with ``` This is where you will write your code. A new chunk can be created by pressing COMMAND + ALT + I on Mac, or CONTROL + ALT + I on PC. Anything outside a **chunk** isn't code, it's just words! Like a very fancy text edit.
 
-At its least useful, you can treat R like a calculator for basic computations. Just type some mathematical expression into your code **chunk**, and the result will be displayed in the console. A **chunk** is designated by starting with ``` ```{r}``` and ending with ``` This is where you will write your code. A new chunk can be created by pressing COMMAND + ALT + I on Mac, or CONTROL + ALT + I on PC.
-
-You can run lines of code from your script by highlighting them, and pressing COMMAND/CONTROL + ENTER on Mac, or CONTROL + ENTER on PC. If you're in an R Markdown document and want to run a whole chunk of code, you can press COMMAND/CONTROL + SHIFT + ENTER on Mac, or ALT + CONTROL + ALT + C on PC.
+You can run lines of code from your script by highlighting them, and pressing COMMAND/CONTROL + ENTER on Mac, or CONTROL + ENTER on PC. If you're in an R Markdown document and want to run a whole chunk of code, you can press COMMAND/CONTROL + SHIFT + ENTER on Mac, or ALT + CONTROL + ALT + C on PC. Alternatively, you can press the little green and right-facing arrow.
 
 ```{r basic_calculator}
 1 + 2
@@ -69,7 +60,7 @@ You can run lines of code from your script by highlighting them, and pressing CO
 5 * (2 + 3)
 ```
 
-PRACTICE: Use the chunk below to practice using R as a calculator.
+PRACTICE: Use the chunk below to practice using R as a calculator. Try running it line by line and all at once for practice multiple times :)
 
 ```{r practice with r as a calculator}
 # Write a mathematical expression with at least three numbers
@@ -90,9 +81,14 @@ You may have notice some fun blue text in the previous box! These are comments a
 ```
 PRACTICE: Write a comment below that says something fun. Then write a mathematical expression that you comment out. Then rewrite the expression as code and run it!
 
+
+```{r comment mixed with code practice}
+
+```
+
 ##Printing
 
-Simply running a line of code that does not have an equals sign will print output in R markdown. However, you can also use `print()`. For the moment, we will consider these equivalent and can be used interchangeably. As you can see below, the outputs are thee same when you run the chunk of code.
+Simply running a line of code that does not have an equals sign will print output in R markdown. However, you can also use `print()`. For the moment, we will consider these equivalent and can be used interchangeably. As you can see below, the outputs are thee same when you run the chunk of code. You are about to start to notice a theme here. Just like in a real language (for example, English), there are many ways to do the same thing in R! As you start out, I suggest using the one that's easiest for you. As you get better, you'll learn more about propper syntax (akin to propper grammar)
 
 ```{r printing}
 
@@ -101,9 +97,15 @@ print(1+5)
 
 ```
 
+JOKE BREAK!!!! You've done some great work so far. Here's something fun :)
+
+A statistician's wife had twins. He was delighted. He rang the minister who was also delighted. "Bring them to church on Sunday and we'll baptize them," said the minister. "No," replied the statistician. "Baptize one. We'll keep the other as a control."
+
+If you're wondering whether I'm going to keep giving you horrendous jokes, the answer is yes.
+
 ## Variable Assignment
 
-Of course, R is a programming language, so it is much more powerful than a basic calculator. A major aspect of computing with R involves the assignment of values to variables. There are two (almost) equivalent ways to do this:
+Of course, R is a programming language, so it is much more powerful than a basic calculator. A major aspect of computing with R involves the assignment of values to variables. In other words, we will 'give' a value to something. There are two (almost) equivalent ways to do this:
 
 ```{r variable_assignment_1}
 x = 4
@@ -126,7 +128,7 @@ x
 
 ```
 
-It is important not to confuse variable assignment with a statement about equality. In your head, you should say *set x to 4* or *x gets 4*, but not *x is equal to 4*. Don't worry now about the subtle differences between the two assignment styles. Although using `=` is more consistent with the norm in other programming languages (only r uses `<-`), `<-` is the typical practice as it makes the action that is being performed more obvious. Whichever you choose, it's best to be consistent throughout your code. However, they are exactly the same when used correctly
+It is important not to confuse variable assignment with a statement about equality. In your head, you should say *set x to 4* or *x gets 4*, but not *x is equal to 4*. Don't worry now about the subtle differences between the two assignment styles. Although using `=` is more consistent with the norm in other programming languages (only r uses `<-`), `<-` is the typical practice as it makes the action that is being performed more obvious. Whichever you choose, it's best to be consistent throughout your code. However, they are exactly the same when used correctly. Here is another example of two ways to do the same thing!
 
 In case you're wondering, you test for equality with two equal signs (`==`), which does something completely different:
 
@@ -144,20 +146,8 @@ x == z
 
 It's fine to use variable names like `x` for simple math examples like the ones above. But, when writing code to perform analysis, you should be careful to use descriptive names. Code where things are named, `subject_id`, `condition`, and `rt` will be a bit more verbose than if you had used `x`, `y`, and `z`, but it will also make **much** more sense when you read it again 4 months later as you write up the paper. For those new to coding, you can technically name anything you want with any name! Usually, you want variable names to be informative.
 
-With that said, there are a few rules for variable names. You can use any alphanumeric character, although the first character must be a letter. You can't use spaces, because the computer doesn't know that you're trying to write a phrase and interprets that as two (or more) separate terms. When you want something like a phrase, the `_` and `.` characters can be employed (this can be a bit confusing as `.` is usually meaningful in programming languages, but not in R).
+With that said, there are a few rules for variable names. You can use any alphanumeric character, although the first character must be a letter. You can't use spaces, because the computer doesn't know that you're trying to write a phrase and interprets that as two (or more) separate terms. Also, when I say you can't use spaces, you literally can't - the console will give you an error! When you want something like a phrase, the `_` and `.` characters can be employed (this can be a bit confusing as `.` is usually meaningful in programming languages, but not in R). In general prefer the underscore as it's easier to read. Below are examples of both! Remeber, just don't use a real space!
 
-Here's a simple example that novice coders often find confusing. Walk yourself through the code and make sure you understand what operations lead to the final return value:
-
-```{r assignment_example}
-a <-  10
-b <-  20
-a <-  b
-a
-```
-
-That's right, an object will only contain its *most recent* assignment. Even though `a` was originally assigned the value 10, it was then reassigned the value of `b`. 
-
-We can also use more complex names to store numbers using `.` or `_` as mentioned earlier. There is no universal standard for `.` or `_`, but I general prefer the underscore as it's easier to read. Below are examples of both! Remeber, jsut don't use a real space!
 
 ```{r complex names}
 
@@ -169,7 +159,7 @@ ben_age
 angela_age
 average_freshman_age
 
-#using periods
+#using periods - exact same thing!
 ben.age <- 26
 angela.age <- 130
 average.freshman.age <- 18
@@ -179,16 +169,38 @@ average.freshman.age
 
 ```
 
+
+A little ore about assignment. Here's a simple example that novice coders often find confusing. Walk yourself through the code and make sure you understand what operations lead to the final return value:
+
+```{r assignment_example}
+a <-  10
+b <-  20
+a <-  b
+a
+```
+
+That's right, an object will only contain its *most recent* assignment. Even though `a` was originally assigned the value 10, it was then reassigned the value of `b`. 
+
 So far we've only been dealing with numbers, but there are other data types as well.
 
-For instance, we could assign character (aka string) values, with quotation marks:
+For instance, we could assign character (aka string) values, with quotation marks or apostrophes (no difference between the two of them):
 
 ```{r non-numeric values}
+
+#Quotations
 group_size <- "average"
 group_size
 
 rsc_name <- "Research Support Center"
 rsc_phone <- "8014225114" 
+
+#apostrophes
+group_size <- 'average'
+group_size
+
+rsc_name <- 'Research Support Center'
+rsc_phone <- '8014225114'
+
 ```
 Here, even though we used letters for one object and digits for the other, R recognizes both objects as character values. Using quotation marks makes all values into characters. In computer science, these are called strings!
 
@@ -200,11 +212,21 @@ rsc_phone
 ```
 Without quotation marks, R recognizes the digits as a number that can be operated on--it can be added, subtracted, etc.
 
-We can also assign logical values, `TRUE` and `FALSE`:
+We can also assign logical values, `TRUE` and `FALSE`. in R, true and false must always be written completely in uppercase. Alternatively, you can write `T` or `F` if you want to be snazzy :). These are some of the only single letters that mean anything alone in all of R.
 
 ```{r logical values}
 alive <- TRUE
 asleep <- FALSE
+
+alive
+asleep
+
+#same thing with T and F
+alive <- T
+asleep <- F
+
+alive
+asleep
 ```
 
 While we're at it, you can also compare numbers with >, <, !=, <=, and >=, which return `TRUE` or `FALSE` as well.
@@ -229,30 +251,42 @@ fhss_n = psych + sociology + econ + poli.sci + sfl
 fhss_n # print the result for the total number of FHSS students
 ```
 
-## A brief Forray into Data types
+It is important to recognize that you cannot combine data that is different types. For example, a number, or a variable that has been assigned a number cannot be combined with a true/False value. Additionally, a string cannot be combined with a number - all combinations must be the same data type. If you uncomment #a+b, the code will fail!
+
+```{r data types - can you combine?}
+
+#This doesn't work and should give you an error - uncomment a+b to try
+a <- '4'
+b <- 5
+#a+b
+
+```
 
 Using functions
 ---------------
 
-Another core concept involves using **functions** to perform more complex operations. **Functions** in R work like they do in mathematics: they take one or more inputs (called *arguments* or *parameters*), perform a certain operation, and then produce one or more outputs (or *return values*). You *call* a function by writing its name followed by parentheses, with any arguments going inside the parentheses. We already saw one example of this with the `print()` function above. The `cat()` function is similar, but it converts its arguments into characters first. There are also some basic mathematical functions built into R that operate on numbers:
+Another core concept involves using **functions** to perform more complex operations. **Functions** in R work like they do in mathematics: they take one or more inputs (called *arguments* or *parameters*), perform a certain operation, and then produce one or more outputs (or *return values*). Someone pre-wrote these functions to make your life wayyyy easier.You *call* a function by writing its name followed by parentheses, with any arguments going inside the parentheses. We already saw one example of this with the `print()` function above. The `cat()` function is similar, but it converts its arguments into characters first. There are also some basic mathematical functions built into R that operate on numbers:
 
 ```{r math_functions}
+
 abs(-4)
 sqrt(64)
 log(1.75)
 ```
+What did each of those functions do? Make sure you know! When in doubt, google!
 
-A frequently-used function is `c()`. This takes a sequence of arguments and sticks them together into a **vector**, which we'll explain a little bit more about below. All you need to know now is that most of the built in functions for descriptive statistics (and there are many of these!) expect to receive a vector or something like it.
+A frequently-used function is `c()`. This takes a sequence of arguments and sticks them together into a **vector**, which we'll explain a little bit more about below. All you need to know now is that most of the built in functions for descriptive statistics (and there are many of these!) expect to receive a vector or something like it. At thee moment, think of a vector as a list of numbers.
 
 ```{r basic_vectors}
 a <- c(1.5, 4, 3)
-cat(a)
+cat(a) #outputs the object together
 sum(a)
 mean(a)
 sd(a) #Reports standard deviation
+?cat
 ```
 
-Applied example: **(Just Camilla)**
+Applied example:
 
 ```{r}
 # Create vectors for the forecasted high temperatures for San Francisco and Palo Alto over the next week:
@@ -288,6 +322,19 @@ APPLY YOUR KNOWLEDGE:
 
 ```
 
+#R has built in help.
+
+If you are ever confused about a function, you can search it out google. However, you can also do the `?` command in front of a function to get a description of its inner workings. See some simple examples below and the console will out put instructions and examples of how to use it! Literally add a question mark before any function and run the code. If the function exists, R will show you some help.
+
+```{r Self Help}
+
+?mean
+?range
+?sd
+
+```
+
+
 These built-in functions are useful for many reasons, but often we're dealing with more data than a single vector, and we want to do more with it than calculate summary statistics. Next, we'll cover how to import data into R and how to work with it once it's in here. If possible, you want to stay away from manipulating anything in your data outside of R (in Excel, for example) because it's difficult to keep track of changes that you make. In R, your code acts as a trace of every little thing you've done to your data, so you can always undo something if needed or revert back to the data's original form. 
 
 # Importing Data
@@ -319,6 +366,10 @@ d2 <- haven::read_dta("mtcars.dta")
 haven::write_sav(mtcars, "mtcars.sav")
 d3 <- haven::read_sav("mtcars.sav")
 ```
+
+## Libraries and data frame assignment
+
+WOAH. A lot just happened! What are Stata and SPSS?? What's a CSV? What's a library? How did you put a data frame in the letter d? IS YOUR MIND BLOWN??? If you have these questions - that is very understandable! We will address them in order.
 
 
 Once you've imported your datafile, you'll want to take a look at your data set to make sure you have imported it correctly:
