@@ -1,0 +1,583 @@
+---
+title: "R 2: Introduction to the World of Packages and Data Manipulation in R"
+author: "Chayce Baldwin"
+date: "September 22, 2020"
+output: 
+  html_document:
+    theme: cerulean
+    toc: TRUE
+    toc_float: TRUE
+    number_sections: TRUE
+---
+
+
+# Before we get started
+
+## Recap: What we learned in the previous tutorial
+
+In the last tutorial, we learned a few things to get you started in using R:
+
+*   How to download R and R studio
+*   How to begin using an R Markdown
+*   Basic functions in R
+*   How to import data into R and view that data
+*   How to look at summary statistics for individual variables
+
+*Having trouble remembering what exactly an R Markdown is? Want some more resources for learning R?*
+
+*   Review what an R Markdown is [here](#markdown).
+*   Explore further resources for learning R [here](#resources).
+
+
+## Read in our data
+
+We'll need this later:
+
+```{r importing .csv files, include=FALSE}
+# Don't worry about this code being included twice; the Markdown is running one chunk (this one), but not including its output, and not running the other chunk--just showing its code in the output. Notice that in the first line of this chunk it includes the code "include = FALSE", and in the first line of the second chunk it says "eval = FALSE". These commands essentially dictate what I just described.
+
+library(tidyverse)
+library(magrittr) # for %<>% pipe
+write_csv(mtcars, "mtcars.csv")
+d <- read_csv("mtcars.csv")
+d1 <- read_csv("carid.csv")
+d2 <- read_csv("cqi.csv")
+d <- cbind(d, d1, d2)
+d$wt <- d$wt*1000
+d %<>% select(carID, mpg, everything())
+
+```
+
+```{r eval = FALSE}
+library(tidyverse)
+library(magrittr) # for %<>% pipe
+write_csv(mtcars, "mtcars.csv")
+d <- read_csv("mtcars.csv")
+d1 <- read_csv("carid.csv")
+d2 <- read_csv("cqi.csv")
+d <- cbind(d, d1, d2)
+d$wt <- d$wt*1000
+d %<>% select(carID, mpg, everything())
+
+```
+
+# Part I: The Universe of Packages
+
+One of the greatest advantages to using R is that it is *open source*. This means that practically anyone can create content for R, and as they do, new functionalities and additions become available through R, often faster than other statistical programs, such as SPSS or SAS. This community-based content comes in the form of **packages**. A **package** is a collection of related functions developed by people in the R community. Sometimes, a "package" can be a *collection* of other packages that provide useful functions. 
+
+
+If you are interested in learning more about packages and are looking for recommendations of a few useful ones, check out this [website](https://www.datacamp.com/community/tutorials/r-packages-guide). It covers what we have talked about here and more!
+
+## How do I download and use packages?
+
+### Loading packages
+You only need to install these packages once, but you'll need to load them in everytime you start R using the `library()` function. The distinction is that `install.packages()` downloads the files from CRAN and places them in a location where R can find them, while `library()` makes it such that you can call all of the functions that are defined in these packages.
+
+To use `install.packages`, you must use quotation marks to quote the package you want to install (e.g. `install.packages("ggplot2")`). `library(package)` does not need quotation marks and will call the package from where it stored on your computer, so that you can use the functions within the package. So, we only need to install packages once, but each time we start a new R session, we need to reload each package we will be using. There are also some useful functions for checking out the packages you have in your library. Below are detailed some useful functions for checking out and learning more about your packages.
+
+```{r}
+# install.packages("tidyverse")
+# install.packages("ggplot2")
+# install.packages("Hmisc")
+# install.packages("psych")
+library(psych)
+
+?psych # gives some help for the package; description, etc.
+packageDescription("psych") # Shows a description with the information of who created the package, where it is stored in your computer, etc.
+help(package = "psych") # among other things, lists each of the functions in the package. 
+
+library() # Shows a list of all packages you have in libraries with short description
+
+browseVignettes(package = "psych") # shows you how to use some of the common functions within the package
+
+vignette("dplyr") # calls helpful vignettes for the dplyr package
+```
+
+**A word of caution**: Sometimes, the order in which you load packages from their library matters. Consider the following code:
+
+```{r}
+library(psych)
+library(Hmisc)
+
+describe(d$mpg)
+
+detach(package:Hmisc) # unloading packages from your R session
+detach(package:psych)
+```
+
+
+```{r}
+library(Hmisc)
+library(psych)
+
+
+describe(d$mpg)
+
+```
+
+What did you notice? Even though we used the exact same command to describe the variable `mpg`, we get different output! Herein lies one problem with packages: different packages can use the same name for their functions, especially when its something generic, like `describe()`. So, when we try to load packages with functions that have the same name into R, its impossible for R to know which one we want to use. Consequently, R will always use the function from the *most recently* called package: in the first chunk R used the function from the *Hmisc* package, and in the second chunk it used the function from the *psych* package.  
+
+If we want to use both functions, we can force which package R pulls the function from using two colons: `package::function`:
+
+```{r}
+Hmisc::describe(d$mpg)
+psych::describe(d$mpg)
+```
+
+## Good practices with packages
+
+When dealing with packages, it is important that we do so carefully and intentionally so that they operate correctly within our R script. Here are some good practices for dealing with packages:
+
+*   Because you only install packages *once*, comment out the `install.packages()` code once you have installed them on your computer. However, it's a good idea to leave it in your code; it makes the code more easily understandable and reproducible by others (and yourself) later.
+*   Keep your commented out `install.packages()` code, as well as your `library()` code, in a chunk at the beginning of your Markdown. This reduces any problems with trying to run code without first loading packages and keeps them in one central location, which you can easily reference. This also helps you understand if you have created an issue by loading packages like *Hmisc* and *psych* in the wrong order.
+*   Next to each `library()` call, write a comment for why you have that library loaded.
+*   When you come across problems with installing or loading packages, make sure to check out the console for messages from R on what's wrong; these can often be useful.
+
+## What are some useful packages?
+
+```{r}
+#install.packages("tidyverse", "Hsmisc", "dplyr")
+```
+
+
+# Part II: Tidy data manipulation using *dplyr*
+
+One of the most useful packages you can use is a universe of packages called **tidyverse** (that is, a "universe of 'tidy' packages"). You can see a list of the packages included in *tidyverse* and learn more about them [here](https://www.tidyverse.org/packages/). 
+
+*dplyr*, one package within *tidyverse*, is especially useful for data manipulation. But what exactly *is* data manipulation? **Data manipulation** is the process of preparing your data for analysis. Hardly (if ever) do we deal with data that is "clean"--that is, data that is perfectly organized and ready for analysis. So, you have to clean up your data to be in good enough condition to analyze easily and clearly. This involves tasks like deleting unnecessary variables, recoding variables, and creating new variables. We can also manipulate our data to present our data in a new way--say, by looking at means of an outcome across gender, instead of the overall sample mean.
+
+*dplyr* is **a grammar of data manipulation**, providing a consistent set of verbs that help you solve the most common data manipulation challenges. Here are some of the main features of the package:
+
+* `select()` selects variables (columns), or renames existing columns.
+* `filter()` selects rows that fit one or more logical expressions.
+* `rename()` renames columns, and only keep those (note similarity to `select()`)
+* `mutate()` adds new variables that are functions of existing variables.
+* `summarise()` reduces multiple values down to a single summary.
+* `arrange()` changes the ordering of the rows.
+
+These all combine naturally with `group_by()` which allows you to perform any operation by group. You can learn more about them in `vignette("dplyr")`. 
+
+As well as these single-table verbs, dplyr also provides a variety of two-table verbs, which you can learn about in `vignette("two-table")`.
+
+
+## Select certain variables, i.e. columns (`select`)
+
+`select` allows you to subset your dataset by column (i.e by variables). If we wanted our dataset to only include information on the miles per gallon and number of cylinders, we would use select in the following way: 
+
+```{r}
+#select(dataset, variable 1, variable 2)
+d.new <- select(d, mpg, cyl)
+head(d.new)
+```
+
+Try it for yourself: create a dataset that consists only of the number gears and the weight of each car.
+
+```{r}
+
+```
+
+## Filter to certain observations, i.e. rows (`filter`)
+
+`filter` allows you to subset your dataset by row (i.e. observations). If we wanted our dataset to only include cars that had autmatic transmission, we would use filter in the following way: 
+
+```{r}
+#filter(dataset, variable == condition)
+d.auto <- filter(d, am == 0)
+head(d.auto)
+```
+
+Try it for yourself: create a dataset that only includes cars that get more than 25 miles per gallon. 
+```{r}
+
+```
+
+
+## Rename your variables (`rename`)
+
+`rename`
+```{r eval = FALSE}
+#rename(dataset, new name = old name)
+rename(
+  d, 
+  weight = wt,
+  cylinders = cyl
+)
+```
+
+As a shortcut, you can also rename variables as you are selecting them, using `select()`, instead of having to do both steps separately. 
+
+## Create a new variable based on another variable (or set of variables) (`mutate`)
+
+`mutate` allows you to create new variables using existing variables. You can change the type of a variable, combine old variables, or calculate statistics of old variables. 
+
+If we wanted to turn the transmission variable into a factor, create a variable for the mean miles per gallon, and compute a variable representing the square of car weight, we would use mutate in the following way: 
+
+```{r}
+mutate(
+  d, 
+  gear = factor(gear),
+  mpg_mean = mean(mpg, na.rm = TRUE),
+  wt_sq = wt^2
+)
+
+```
+
+Try it for yourself: create a new variable that tells us the amount of horsepower (`hp`) each car has per cylinder (`cyl`). Name this variable `hp_cyl`
+
+```{r}
+
+```
+
+## Get summary statistics of a variable (`summarise`)
+
+Summarise allows us to calculate summary statistics for specific variables in our dataset. For instance, if we wanted to know what the mean miles per gallon of all the cars in our dataset was, we would use summarise in the following way: 
+
+```{r}
+#summarise(dataset, summary_variable = function(old_variable))
+summarise(d, mpg_mean = mean(mpg, na.rm = TRUE))
+```
+
+FYI, `na.rm = TRUE` tells the `mean` function to remove all missing values from the calculation ('na.rm' means "removes NAs"). 
+
+Try it for yourself: calculate the median miles per gallon
+```{r}
+
+```
+
+
+## Doing a series of transformations - using a 'pipe' (`%>%`)
+
+Sometimes we want to use multiple functions at the same time to do multiple transformations of the data. For example, we might want to select certain variables and then filter to certain observations and save this new subset of data to a new dataset. Instead of typing it all out several times, we can use a convenient trick called a 'pipe' which functions as a 'and then' statement in your code. 
+
+Pipes can be a really useful tool to use throughout your coding in R, and there are multiple types of pipes (we'll learn more about other types in a minute).
+
+Below, we're going to create a new dataset `d2` using the old dataset `d`, *and then* select `mpg`, `disp`, and `gear`, *and then* filter to only include cars with 4 gears.
+
+```{r}
+d2 <- 
+  d %>% 
+  select(mpg, disp, gear) %>% 
+  filter(gear == 4)
+```
+
+Try it for yourself: create a new dataset `d3` using `d` *and then* select only `cyl`, `hp`, and `wt`, *and then* filter to cars with 8 cylinders, *and then* calculate the mean horsepower for these cars.  
+
+```{r}
+
+```
+
+### Another pipe: Compound assignment (`%<>%`)
+
+Run each of the lines below separately and see what happens. After running each line, check out `d` in your global environment (top right part of the screen). What's different?
+
+```{r eval = FALSE}
+d %>% mutate(
+  lwt = log(wt)
+)
+
+d %<>% mutate(
+  lwt = log(wt)
+)
+```
+
+That's right, the `%<>%` *back-assigns* the output of the operations to overwrite `d`. That is, whereas a normal pipe only works one way--using d, it computes a new variable and shows us the output--this compound assignment pipe computes a new variable and then assigns that value *back* to `d`. Think of the extra `<` in the operator as saying, "And then assign back to the object on the right side of the operator". So, any time you want to create a new variable and save it in the data frame, it is best to use this operator.  
+
+### And one more: The money pipe (`%$%`)
+
+How might we rewrite the following code using a pipe?
+
+```{r eval = FALSE}
+with(d, plot(mpg ~ wt))
+```
+
+Though we might intuit that we could say, `d %>% plot(mpg ~ wt)`, that actually wouldn't work. We would have to write it as follows:
+
+```{r}
+d %$% plot(mpg ~ wt)
+```
+
+Just like the `$` that we use when calling a variable from a dataset (e.g. `d$mpg`), this pipe helps call the data and variables for certain functions.
+
+The `%$%` pipe enables us to call from the data set for functions that *don't normally have a data argument*. That is, because you can't say `data = d` within the `plot()` function, you would normally have to use the `with()` function to call the data--`with(d, (plot(mpg ~ mpg_cat)))`-- in order to successfully avoid using `d$` before each variable. So, if we use the normal pipe operator (`%>%`) to call the data (`d %>% plot()`), the `plot()` function still isn't able to recognize the variables, because it doesn't normally have a data argument. Herein, we can use `%$%`, which allows us to call and use the data set, even for functions without a data argument.
+
+**Learn more about pipes**:
+
+## Summarize by group (`group_by`)
+
+If you wanted to calculate a statistic by group in your data, you can use `group_by`, a pipe, and `summarize`. So, for example, if we wanted to calculate the mean miles per gallon for cars with automatic vs. manual transmissions, you would use `group_by` in the following way: 
+
+```{r}
+d %>% 
+  group_by(am) %>% 
+  summarise(mean_mpg = mean(mpg, na.rm = T))
+```
+
+Try it for yourself: calculate the average weight of cars based on the number of cylinders that they have. 
+```{r}
+
+```
+
+
+## Bringing it all together
+
+### How can we use these tools to build effective code?
+
+With these tools, we can now build many combinations of functions to manipulate our data how we want. Consider one example below. We are interested in examining the means of `mpg` and `wt`, but only for cars with mpg above 20 (i.e. moderately well performing cars). Additionally, we want to see how cars with different numbers of cylinders and transmission types are different on `mpg` and `wt`; so, we also organize these results by number of cylinders (`cyl`) and transmission type (`am`). Here is one way we could write this code, utilizing the functions `group_by()`, `select()`, `summarise()`, and `filter()`.
+
+```{r}
+
+grouped_cars <- group_by(d, cyl, am)
+cars_data <- select(grouped_cars, cyl, am, wt, mpg)
+summarized_mpg <- summarise(cars_data, 
+                wt.mean = mean(wt, na.rm = TRUE), 
+                mpg.mean = mean(mpg, na.rm = TRUE))
+final_result <- filter(summarized_mpg, mpg.mean > 20)
+
+final_result
+
+```
+
+Now consider the code below; though it looks a bit different, it does the exact same thing as the chunk above! This new code, however, utilizes pipes `%>%` to make the code more succinct, more organized, and more intuitive. Instead of creating many new objects, it simply says, "Using data set d, group variables by `cyl` and `am` *and then*--using only `cyl`, `am`, `wt`, and `mpg`-- summarize the means of each group, *and then* only keep rows where the mean of `mpg` is above 20." Each line of code builds upon the last, allowing us to get the same result as above with less code.
+
+```{r}
+d %>% 
+    group_by(cyl, am) %>% 
+    select(cyl, am, wt, mpg) %>% 
+    summarise(wt.mean = mean(wt, na.rm = TRUE), mpg.mean = mean(mpg, na.rm = TRUE)) %>% 
+    filter(mpg.mean > 20)
+```
+
+
+### Solving our most common data manipulation challenges using the grammar of *dplyr*
+
+Now that we have these tools from *dplyr* and have learned the basic 'grammar' of data manipulation, we can solve some of our common data manipulation challenges:
+
+**1. Recoding variables**
+
+Our data set includes 4 items of car quality as rated by expert mechanics. Based on ratings from mechanics, each car gets a score between 1 (Very poor) to 7 (Excellent) for engine quality (`qual_eng`), transmission quality (`qual_trans`), and body quality (`qual_bod`). Additionally, mechanics were asked, "How frequently do you estimate this car is apt to have problems?" on a scale from 1 (not at all frequently) to 7 (extremely frequently) (`car_prob`). Together, these 4 items create the Car Quality Index (CQI).
+
+In order to combine these items into an index, we must first change the values for the variable `car_prob`: whereas the other variables indicate *higher* car quality with *higher* values, `car_prob` indicates *lower* car quality with *higher* values, and thus must be **recoded**. 
+
+You can recode Likert-type items by subtracting the values in the variable by one more than the max of the scale. Thus, a score that was 7--subtracted from 8--now becomes 1, 6 becomes 2, 5 becomes 3, and so on.
+
+```{r}
+d %<>% mutate(
+    car_prob_r = 8 - car_prob
+  )
+```
+
+**2. Creating composite variables**
+
+Now we can combine our 4 items into an index (i.e. a composite variable that is the mean of ratings for each car). To make this easiest, a friend of mine made a handy function for computing composite variables. Here, we will call it `gen_comp()` (i.e., 'generate composite'). There are two steps to creating a composite variable:
+
+1. Create a vector (i.e. a grouped list) of each of the items that will go into the composite. You can use this vector as an object to compute descriptives, build tables, etc. with all of the variables in the vector at once. Also, its handy for creating composite variables.
+
+2. Input the new variable name and the name of the vector it is pulling from into the function `gen_comp()`.
+
+```{r}
+## The code for our new function (no need--at this point--to understand this code completely)
+gen_comp <- function(data, comp, vector){
+   comp <- enquo(comp)
+   data %>% 
+       rowwise() %>% 
+       mutate(!!quo_name(comp) := mean(c(!!!vector), na.rm = TRUE)) %>% 
+       ungroup()
+}
+
+## Step 1
+vector_cqi <- quos(qual_eng, qual_trans, qual_bod, car_prob)
+
+## Step 2
+d %<>% gen_comp(comp = cqi, vector = vector_cqi)
+
+```
+
+**3. Centering**
+
+Another common manipulation we may want to do is mean centering our data. **Mean centering** means that the mean becomes 0 and all other scores are presented in terms of their relative distance from the mean (negative for below the mean and positive for above the mean). 
+
+Here, I've created a really simple function (`var.center`) that takes advantage of the function `scale()` for mean centering our data. Normally, `scale()` will standardize the data (mean zero with each score representing how many standard deviations it is away from the mean). However, we can tell it to just subtract the mean from scores by indicating `scale = FALSE`. To make it easier, we have just made a function that does this, but only requires you to input the variables you want to operate on. For other ways to center and for the original code of this custom function, check out this [website](http://www.gastonsanchez.com/visually-enforced/how-to/2014/01/15/Center-data-in-R/).
+
+Alternatively, you can center old school: compute means for each variable and subtract that mean from the variable.
+
+```{r}
+## Code for the new function
+var.center <- function(x) {
+    scale(x, scale = FALSE)
+}
+
+## example of new function
+d %<>% mutate(
+  wt_c2 = var.center(wt),
+  cqi_c2 = var.center(cqi)
+)
+
+## doing it the old school way
+d %<>% mutate(
+  mean_wt = mean(wt),
+  wt_c = wt - mean_wt,
+  mean_cqi = mean(cqi),
+  cqi_c = cqi - mean_cqi
+)
+
+d %>% select(wt_c, wt_c2, cqi_c, cqi_c2) #Notice that both methods give you the same results
+```
+
+**And many other useful transformations and manipulations:**
+
+```{r}
+# rescaling, computing the log
+d %<>% mutate(
+  wt_s = wt/1000, #scaling weight down to 
+  lmpg = log(mpg) # creating the log of mpg
+)
+```
+
+
+Here are some other useful things you can now do:
+
+```{r, tidy = TRUE}
+library(knitr) # for kable() function (creates nice tables)
+
+d %>% filter(wt > 3.5) %>%
+           group_by(cyl, am) %>% 
+           summarise(mn = mean(mpg))
+           
+d %>% select(starts_with("qual")) %>% summary
+
+d %>% select(starts_with("qual")) %>% describe %>% round(., digits = 2) %>% kable
+
+d %>% select(!!!vector_cqi) %>% describe %>% round(., digits = 2) %>% kable
+
+d %>% 
+  rowwise() %>% #rowwise() used to do an operation by rows rather than columns--row means, etc.
+  mutate(mymean=mean(c(cyl,mpg))) %>% 
+  select(cyl, mpg, mymean)
+##Other examples of what we use mutate for in psychology...creating new variables, 
+
+d %>% select(!!!vector_cqi) %>% as.matrix() %>% rcorr()
+
+```
+
+Though *dplyr* manages to provide ways to solve most of the data manipulation challenges we will come across in just a handful of functions, the functionalities may still be confusing or difficult to remember at first. If only there was a way to remember all of these functions...Wait--there's a [**_cheatsheet_**] for *dplyr*, too?? Wow, R Studio, you have really outdone yourself this time. 
+
+
+### Changing variable type
+
+Remember the four variable types we talked about last time? Often we have occasion to need to *change* our variables from one type to another--each act differently in analyses and we have to make sure we have the right variable type for what we are trying to do. 
+
+For example, we might want to treat some variables as qualitative, nominal **factors** rather than continuous, numeric **integers**. In R, we must specify which variables to treat as factors if the **levels** (i.e., unique values) of the variable are composed of numbers instead of strings. Note that if the variable (e.g., "ID") *levels* start with a letter (e.g., "subject1", "subject2") R will automatically interpret the variable as a *factor*. If the variable levels start with a number (e.g., "1", "2"), R with automatically interpret the variable as an *integer*. If you want the variable interpreted differently, you have to tell R.
+
+For instance, the variable `mpg` is continuous, but `am` is not. However, since the **levels** of `am` are indicated with numbers, we must tell R to treat `am` as a factor:
+
+```{r }
+## the function factor() converts to a factor and the option labels specifies names to assign to the levels
+d %<>% 
+  mutate(am = factor(am, labels = c("Auto", "Manual")))
+
+#Other alternative
+#d$am = factor(d$am, labels = c("Auto", "Manual")) 
+```
+
+Now we can look at the structure of the `d` data frame again, to make sure `am` is now a factor:
+
+```{r }
+head(str(d)) # We use head() to look at only the first few variables of the data set
+```
+
+
+### Creating factors from continuous variables
+
+Sometimes, we may want to break up a continuous variable into intervals (e.g. for age: 18 - 24, 25 - 30, 30 +). In our dataset, for simplicity, we might want to look at gas mileage as an **ordered factor**, not a quantitative variable. By making `mpg` into a factor, we are able to group cars into categories based on their respective mpg. So let us create a new factor, `mpg_cat` which can be 'low', 'medium', or 'high'. Given the `mpg` variable, we can create a new categorical variable (i.e., **factor**) by specifying breaks at specific intervals (see below).
+
+Here, we use the `dplyr` function `case_when()`, which says, "when this is true," (the left side of the `~`), "make this happen" (the right side of the `~`). So, for the first line, "when `mpg` is less than 17, give the new variable, `mpg_cat` the value 'Low'." Then we use the function `ordered()` to specify that low, medium, and high go in a specific order (as opposed to levels like red, blue, and yellow, which have no inherent order).
+
+```{r}
+d %<>% 
+  mutate(
+    mpg_cat = case_when(mpg < 17 ~ "Low",
+                        mpg >= 17 & mpg < 24 ~ "Medium",
+                        mpg >= 24 ~ "High"),
+         mpg_cat = ordered(mpg_cat,levels = c("Low","Medium","High")))
+
+```
+
+These break points result in 3 mpg categories: below 17, 17:23.9, and 24 and up. We can also visualize these groups:
+
+```{r plot, fig.width=7, fig.height=6}
+d %$% plot(mpg ~ mpg_cat)
+```
+
+
+## Saving your data and going home
+After you have manipulated your variables, you will save a new dataset. This can then be used in data analysis. It is best to create one markdown for data manipulation, clean your data, and then save a new, totally clean and ready-to-go data file to use for your analyses in a *new* markdown.
+
+*Something important*: Unlike SPSS and Excel, the default in R is not to save your computed variables. When we work with R, we import data into a new space (a data frame) and then work within that space. In SPSS and Excel, you're always editing the source file and therefore all of your changes can be saved. If you want to save your computed variables in a .csv file, you'll need to write a new file. But fear not--there's a simple command that does just that. Let's say we want to save our newly computed variables and cleaned data set into a permanent R data file. We'd do this:
+
+```{r}
+write_rds(d, 'data_clean.rds')
+```
+
+Notice that we saved our new data file as an .rds file; this is a file extension designating an R data file. When we want to read in the data in a new markdown, we can use the code `read_rds('data.clean.rds')`.
+
+# Advanced Data manipulation: Reshaping
+
+## Reshaping and labeling dataframes using *tidyr*
+
+Let's load in some data that has both *between*- and *within*-subject factors. This data file is called `kv0.csv`. Here, attention (`attnr`) is a *between-subjects* factor with 2 levels, `attnr` = 'divided' or 'focused'; and there are 10 subjects (`subidr`) at each level. Also, each subject solved anagrams at 3 levels of difficulty, indexed by the number of possible solutions (`num` = 1, 2, or 3; a *within-subjects* variable). Subject's score at each level of `num` is noted.  This is a *repeated measures design*.  **How does score depend on attn and num?**
+
+
+```{r load_kv0, include=FALSE}
+d <- read.csv('kv0.csv')  
+head(d)	
+str(d)
+```
+
+As you can see, this dataframe is in short-form, meaning that the within-subject observations are displayed in separate columns, and each subject occupies a single row. 
+
+To convert this dataframe to long-form, we can use the gather() function from the tidyr package. Our 'id.vars' are those variables that we want to be the same for each subject, and the 'measure.vars' are those that are repeated measures on each subject:
+
+The first two arguments are the name of the category variable (key), and the name of the variable that will contain the scores (value). The next arguments are the variables that you don't want to populate the new variables you are creating, but would like to keep as the same for each subject. Use a minus sign (-) before these variables to express that you want to keep them as is. Experiment with just using key and value, to see how that works.
+
+```{r reshape_d, include=FALSE}
+dl <- d %>% gather(num,score,-subidr,-attnr)
+head(dl)
+str(dl)
+```
+
+```{r}
+#Experiment with just using key and value, without additional variables.
+d %>% gather(num,score)
+```
+
+Basically, we now have a long-form dataframe with 3 rows for each subject.
+
+If you would like to go back to a wide data format, you would have to use the `spread()` function which reverses it.
+
+```{r}
+dw <- dl %>% spread(num,score)
+```
+
+Now compare `dw` and `d` to see if they are equivalent.
+```{r}
+
+```
+
+
+# Review: End Notes
+
+## What's an R Markdown again? {#markdown}
+
+This is the main kind of document that I use in RStudio, and it's the primary advantage of RStudio over base R console. R Markdown allows you to create a file with a mix of R code and regular text, which is useful if you want to have explanations of your code alongside the code itself. This document, for example, is an R Markdown document. It is also useful because you can export your R Markdown file to an html page or a pdf, which comes in handy when you want to share your code or a report of your analyses to someone who doesn't have R. If you're interested in learning more about the functionality of R Markdown, you can visit [this webpage](https://rmarkdown.rstudio.com/lesson-1.html)
+
+R Markdowns use **chunks** to run code. A **chunk** is designated by starting with ``` ```{r}``` and ending with ``` This is where you will write your code. A new chunk can be created by pressing COMMAND + ALT + I on Mac, or CONTROL + ALT + I on PC.
+
+You can run lines of code by highlighting them, and pressing COMMAND + ENTER on Mac, or CONTROL + ENTER on PC. If you want to run a whole chunk of code, you can press COMMAND + ALT + C on Mac, or ALT + CONTROL + ALT + C on PC. Alternatively, you can run a chunk of code by clicking the green right-facing arrow at the top-right corner of each chunk. The downward-facing arrow directly left of the green arrow will run all code up to that point.
+
+## Some useful resources to continue your learning {#resources}
+
+A useful resource, in my opinion, is the [stackoverflow](http://stackoverflow.com/) website. Because this is a general-purpose resource for programming help, it will be useful to use the R tag (`[R]`) in your queries. A related resource is the [statistics stackexchange](http://stats.stackexchange.com/), which is like Stack Overflow but focused more on the underlying statistical issues.
+**Add other resources**
+
+
+One of the best resources for learning how to use R well, in a "tidy" way, is [R for Data Science](http://r4ds.had.co.nz/index.html)(R4DS). This contains a good intro to using *dplyr*, as well as a solid general intro to R. 

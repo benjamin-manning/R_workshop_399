@@ -1,0 +1,588 @@
+---
+title: 'Character Lab & PennWeek 1: Introduction to R'
+author: "Benjamin Manning"
+date: "June 1, 2021"
+output:
+  html_document:
+    theme: cerulean
+    toc: TRUE
+    toc_float: TRUE
+    number_sections: TRUE
+
+---
+
+
+**Introduction to Statistical Computing with R**
+
+Based on notes by Paul Thibodeau (2009) and revisions by the Psych 252 instructors in 2010 and 2011
+
+Expanded in 2012 by Mike Frank, Benoit Monin and Ewart Thomas
+
+Converted to [R Markdown](http://www.rstudio.com/ide/docs/r_markdown) format and further expanded in 2013 by Michael Waskom.
+
+2013 TAs: Stephanie Gagnon, Lauren Howe, Michael Waskom, Alyssa Fu, Kevin Mickey, Eric Miller
+
+Adapted in summer 2018 for short RA tutorial by Camilla Griffiths & Juan Ospina.
+
+Adapted, revised, and added upon by Chayce Baldwin fall 2018 for RSC R workshops
+
+Aggressively and comically adapted, revised, and added upon by Benjamin Manning in 2021 for psych 399, new Character Lab employees, and anyone who is interested :)..
+
+*If you haven't already installed R, it is available [here](http://cran.us.r-project.org/). Then, [download R Studio](https://www.rstudio.com/products/rstudio/download/).*
+
+# Basic interaction with the R console
+
+HEYYYYYY. Welcome to R! I'm Ben (imagine a siri like voice reading this to you in your head....) and I will be introducing you to the super cool programming language that is R! R is built on C++ which you might have heard of, and is especially useful for people who want to do statistical analysis without dealing with annoying coding stuff from lower languages. If you have some experience with R and coding already, some of this is going to be exceedingly simple. Hopefully, it will still be useful! As you are going through this is going to be hard! Learning to code is like learning a language. But just remember, that's all it is! You don't need to be a quantitative genius or even good at math :). Alright, let's go! You got this!
+
+Let's start with a joke!
+
+What does the statistician pirate say to his crew in the morning?
+
+How RRRRRRRR you doing??????!!!!!
+
+Alright, that was cringe worthy and you’re probably considering dropping this class. Don't do that - I shall redeem myself!
+
+To start off, click the little green arrow (pointing to the right) in the box below (it's a slightly different background and we will call it a code **chunk**) with install.packages. Then, just keep reading and following instructions!
+
+
+```{r install packages for later}
+install.packages("psych")
+install.packages("tidyverse") #Once downloaded, comment out
+```
+
+At its least useful, you can treat R like a calculator for basic computations. Just type some mathematical expression into your code **chunk**, and the result will be displayed in the console. A **chunk** is designated by starting with ``` ```{r}``` and ending with ``` This is where you will write your code. A new chunk can be created by pressing COMMAND + OPTION + I on Mac, or CONTROL + ALT + I on PC. Anything outside a **chunk** isn't code, it's just words! Like a very fancy text edit.
+
+You can run lines of code from your script by highlighting them, and pressing COMMAND/CONTROL + ENTER on Mac, or CONTROL + ENTER on PC. If you're in an R Markdown document and want to run a whole chunk of code, you can press COMMAND/CONTROL + SHIFT + ENTER on Mac, or ALT + CONTROL + ALT + C on PC. Alternatively, you can press the little green and right-facing arrow.
+
+```{r basic_calculator}
+1 + 2
+13 / 2
+2 ^ 6
+5 * (2 + 3)
+x <- 'nate'
+
+```
+
+PRACTICE: Use the chunk below to practice using R as a calculator. Try running it line by line and all at once for practice multiple times :)
+
+```{r practice with r as a calculator}
+# Write a mathematical expression with at least three numbers
+
+# Write a mathematical expression with different operations
+
+```
+
+You may have noticed some fun colored  text in the previous box! These are comments and are simply notes about the code in the code. Any line that starts with the `#` sign will be ignored by the computer and is simply just telling the reader / coder what is going on. You can also use this to temporarily block out code without deleting it if you want to use it later
+
+```{r comments}
+#This is a comment!
+
+# 1+4 does nothing right here because I commented it out. The next line will be code if I don't use '#'
+1 + 4
+#code will always be a different color than comments - so it should be easy to see!
+
+```
+PRACTICE: Write a comment below that says something fun. Then write a mathematical expression that you comment out. Then rewrite the expression as code and run it!
+
+
+```{r comment mixed with code practice}
+
+```
+
+A Note on comments:
+
+Comments are ESSENTIAL in coding. It's okay to add a ton of them to say what's going on. No joke - when I am working on a complex script, I literally write comments between every line of code - it is shockingly hard to come back to an R file and figure out what you were doing without comments. TRUST ME. This is your work, your style, your memory, but use comments - all the cool kids are doing it!
+
+##Printing
+
+Simply running a line of code that does not have an equals sign will print output in R markdown. However, you can also use `print()`. For the moment, we will consider these equivalent, and they can be used interchangeably. As you can see below, the outputs are the same when you run the chunk of code. You are about to start to notice a theme here. Just like in a real language (for example, English), there are many ways to do the same thing in R! As you start out, I suggest using the one that's easiest for you. As you get better, you'll learn more about proper syntax (akin to proper grammar)
+
+```{r printing}
+
+print(1+5)
+1+5
+
+```
+
+JOKE BREAK!!!! You've done some great work so far. Here's something fun :)
+
+A statistician's wife had twins. He was delighted. He rang the minister who was also delighted. "Bring them to church on Sunday and we'll baptize them," said the minister. "No," replied the statistician. "Baptize one. We'll keep the other as a control."
+
+If you're wondering whether I'm going to keep giving you horrendous jokes, the answer is yes.
+
+## Variable Assignment
+
+Of course, R is a programming language, so it is much more powerful than a basic calculator. A major aspect of computing with R involves the assignment of values to variables. In other words, we will 'give' a value to something. There are two (almost) equivalent ways to do this:
+
+```{r variable_assignment_1}
+x = 4
+x <- 4
+```
+
+In both cases, `x` will represent `4` for all lines of code below these here, unless you reassign `x`. Note below that adding 2 to `x` will temporarily add 2 to x and print that value. A new value is only made "permanent" when an `<-` or `=` is used. This can be done using previous values of a variable or brand new values!
+
+```{r variable_assignment_2}
+#print previous x
+x
+#print x + 2 (temporary)
+x + 2
+#permanently add 2
+x <- x + 2
+x
+#give x a brand new value unrelated to previous values
+x <- 8
+x
+
+```
+
+It is important not to confuse variable assignment with a statement about equality. In your head, you should say *set x to 4* or *x gets 4*, but not *x is equal to 4*. Don't worry now about the subtle differences between the two assignment styles. Although using `=` is more consistent with the norm in other programming languages (only r uses `<-`), `<-` is the typical practice as it makes the action that is being performed more obvious. Whichever you choose, it's best to be consistent throughout your code. However, they are exactly the same when used correctly. Here is another example of two ways to do the same thing!
+
+In case you're wondering, you test for equality with two equal signs (`==`), which does something completely different:
+
+```{r equality_tests}
+#You can do this with numbers
+2 == 2
+2 == 3
+#you can also do it with variables!
+x <- 2
+y <- 2
+z <- 3
+x == y
+x == z
+```
+
+It's fine to use variable names like `x` for simple math examples like the ones above. But, when writing code to perform analysis, you should be careful to use descriptive names. Code where things are named, `subject_id`, `condition`, and `rt` will be a bit more verbose than if you had used `x`, `y`, and `z`, but it will also make **much** more sense when you read it again 4 months later as you write up the paper. For those new to coding, you can technically name anything you want with any name! Usually, you want variable names to be informative.
+
+With that said, there are a few rules for variable names. You can use any alphanumeric character, although the first character must be a letter. You can't use spaces, because the computer doesn't know that you're trying to write a phrase and interprets that as two (or more) separate terms. Also, when I say you can't use spaces, you literally can't - the console will give you an error! When you want something like a phrase, the `_` and `.` characters can be employed (this can be a bit confusing as `.` is usually meaningful in programming languages, but not in R). In general, most prefer the underscore as it's easier to read. Below are examples of both! Remember, just don't use a real space!
+
+
+```{r complex names}
+
+#using underscore
+ben_age <- 26
+angela_age <- 130
+average_freshman_age <- 18
+ben_age
+angela_age
+average_freshman_age
+
+#using periods - exact same thing!
+ben.age <- 26
+angela.age <- 130
+average.freshman.age <- 18
+ben.age
+angela.age
+average.freshman.age
+
+```
+
+
+A little more about assignment. Here's a simple example that novice coders often find confusing. Walk yourself through the code and make sure you understand what operations lead to the final return value:
+
+```{r assignment_example}
+a <-  10
+b <-  20
+a <-  b
+a
+```
+
+That's right, an object will only contain its *most recent* assignment. Even though `a` was originally assigned the value 10, it was then reassigned the value of `b`. 
+
+So far, we've only been dealing with numbers, but there are other data types as well.
+
+For instance, we could assign character (aka string) values, with quotation marks or apostrophes (no difference between the two of them):
+
+
+```{r non-numeric values}
+
+#Quotations
+group_size <- "average"
+group_size
+
+rsc_name <- "Research Support Center"
+rsc_phone <- "8014225114" 
+
+#apostrophes
+group_size <- 'average'
+group_size
+
+rsc_name <- 'Research Support Center'
+rsc_phone <- '8014225114'
+
+```
+Here, even though we used letters for one object and digits for the other, R recognizes both objects as character values. Using quotation marks makes all values into characters. In computer science, these are called strings!
+
+Do you see how `rsc_phone` changes when we don't use quotation marks?
+
+```{r}
+rsc_phone
+rsc_phone <- 8014225114
+rsc_phone
+```
+Without quotation marks, R recognizes the digits as a number that can be operated on--it can be added, subtracted, etc.
+
+We can also assign logical values, `TRUE` and `FALSE`. in R, true and false must always be written completely in uppercase. Alternatively, you can write `T` or `F` if you want to be snazzy :). These are some of the only single letters that mean anything alone in all of R.
+
+```{r logical values}
+alive <- TRUE
+asleep <- FALSE
+
+alive
+asleep
+
+#same thing with T and F
+alive <- T
+asleep <- F
+
+alive
+asleep
+```
+
+While we're at it, you can also compare numbers with >, <, !=, <=, and >=, which return `TRUE` or `FALSE` as well.
+
+```{r}
+2 < 3
+3 <= 3
+3 != 4 #-> note: the sign "!=" means "not equal to"
+```
+
+Once you've assigned a variable to a value, you can use them in calculations: 
+
+```{r}
+psych <- 0
+sociology <- 1
+econ <- 1
+poli.sci <- 2
+sfl <- 3
+
+
+fhss_n = psych + sociology + econ + poli.sci + sfl 
+fhss_n # print the result for the total number of FHSS students
+```
+
+It is important to recognize that you cannot combine data that is different types. For example, a number, or a variable that has been assigned a number cannot be combined with a True/False value. Additionally, a string cannot be combined with a number - all combinations must be the same data type. If you uncomment #a+b, the code will fail!
+
+```{r data types - can you combine?}
+
+#This doesn't work and should give you an error - uncomment a+b to try
+a <- '4'
+b <- 5
+#a+b
+
+```
+
+Using functions
+---------------
+
+Another core concept involves using **functions** to perform more complex operations. **Functions** in R work like they do in mathematics: they take one or more inputs (called *arguments* or *parameters*), perform a certain operation, and then produce one or more outputs (or *return values*). Someone pre-wrote these functions to make your life wayyyy easier.You *call* a function by writing its name followed by parentheses, with any arguments going inside the parentheses. We already saw one example of this with the `print()` function above. The `cat()` function is similar, but it converts its arguments into characters first. There are also some basic mathematical functions built into R that operate on numbers:
+
+```{r math_functions}
+
+abs(-4)
+sqrt(64)
+log(1.75)
+```
+What did each of those functions do? Make sure you know! When in doubt, google!
+
+A frequently-used function is `c()`. This takes a sequence of arguments and sticks them together into a **vector**, which we'll explain a little bit more about below. All you need to know now is that most of the built-in functions for descriptive statistics (and there are many of these!) expect to receive a vector or something like it. At the moment, think of a vector as a list of numbers.
+
+```{r basic_vectors}
+a <- c(1.5, 4, 3)
+cat(a) #outputs the object together
+sum(a)
+mean(a)
+sd(a) #Reports standard deviation
+?cat
+```
+
+Applied example:
+
+```{r}
+# Create vectors for the forecasted high temperatures for San Francisco and Palo Alto over the next week:
+provo_highs <- c(83, 91, 96, 94, 89, 85, 84)
+slc_highs <- c(80, 85, 95, 89, 82, 77, 81)
+
+provo_highs
+```
+
+Now we can do things like find the mean temperatures (`mean()`) and standard deviation temperatures (`sd()`). We could also look at each vector's `length()`, its `max()` or `min()` values, or its `median()` or `range()`.
+
+```{r}
+mean_slc <- mean(slc_highs) #creates a new variable called mean_sf
+sd(slc_highs) #prints the sd of the sf_highs vector in the console
+
+mean_pa <- mean(provo_highs)
+sd(provo_highs)
+```
+
+
+APPLY YOUR KNOWLEDGE:
+
+1. Find the median and range for these vectors.
+2. Find the length of the vectors. What does the length refer to? 
+3. On average, how much warmer will Provo be than SLC over the next week?
+
+```{r}
+#median & range
+
+#length
+
+#mean difference between Provo & SLC over the next week
+
+```
+
+#R has built in help.
+
+If you are ever confused about a function, you can search it out google. However, you can also do the `?` command in front of a function to get a description of its inner workings. See some simple examples below and the console will output instructions and examples of how to use it! Literally add a question mark before any function and run the code. If the function exists, R will show you some help.
+
+```{r Self Help}
+
+?mean
+?range
+?sd
+
+```
+
+
+These built-in functions are useful for many reasons, but often we're dealing with more data than a single vector, and we want to do more with it than calculate summary statistics. Next, we'll cover how to import data into R and how to work with it once it's in here. If possible, you want to stay away from manipulating anything in your data outside of R (in Excel, for example) because it's difficult to keep track of changes that you make. In R, your code acts as a trace of every little thing you've done to your data, so you can always undo something if needed or revert back to the data's original form. 
+
+# Importing Data
+
+When we run a study and collect data, we'll usually end up with a .csv file that has one row per participant and one column per survey question or variable. We want to import this into R so we can do things like rename variables, calculate summary statistics for many of the survey questions (e.g. how old, on average, were the participants?), and visualize and analyze some of the trends in the data. 
+
+
+```{r importing .csv files}
+library(tidyverse)
+
+# write csv
+write_csv(mtcars, "mtcars.csv")
+
+#file.choose() #Use this function to specify file path of data file
+
+# load a csv file
+d <- read_csv("mtcars.csv")
+
+```
+
+You can also import data from other programs like Stata or SPSS using the package `haven`:
+
+```{r}
+library(haven)
+
+haven::write_dta(mtcars, "mtcars.dta")
+d2 <- haven::read_dta("mtcars.dta")
+
+haven::write_sav(mtcars, "mtcars.sav")
+d3 <- haven::read_sav("mtcars.sav")
+```
+
+## Libraries and data frame assignment
+
+WOAH. A lot just happened! What are Stata and SPSS?? What's a CSV? What's a library? How did you put a data frame in the letter d? IS YOUR MIND BLOWN??? If you have these questions - that is very understandable! We will address them in order.
+
+1. Stata and SPSS are just other coding languages for statistics. They are just another way of doing things we are doing here! Don't worry about them - they won't have any implications in our work. If you know how to use R, you can do anything that can be done in SPSS or Stata.
+
+2. A CSV stands for Comma Separated Values. This is simply a way to store data. Imagine an excel sheet with different cells - except that each cell is just separate by a comma for columns and a return for rows. R reads this in to make a pretty data frame as you traditionally imagine with a column and it's values.
+
+3. A library is a place to store books! DUHHHHH. Okay, Jk. In R a library is simply a pre-written code/materials/data that someone else made that does not come with R. For example, a few cells above you ran the `tidyverse` library and then opened `mtcars`. `mtcars` is a data set that comes publicly in the tidyverse library and we will use it to learn how to handle data. The tidyverse library comes with lots of different functions that are useful and that you will learn. There are also 100s of other libraries that you can easily load into R to accomplish any statistical or coding goal you can imagine :)
+
+4. How did we store data in the letter d??? This is the exact same process as storing a value in variable. Remember when we stored `angela_age <- 51`? Well, in this case we just stored a data frame as a letter to access it in the future! You can store anything in pretty much any name in R. See below for some examples. You can look at a dataframe in R by doing `view()`, which will output the data frame in a new tab.
+
+```{r storing data frames}
+
+angela_age <- 51
+d <- mtcars
+
+view(d)
+
+```
+
+Now, let's play with the data a little.
+
+Once you've imported your datafile, you'll want to take a look at your data set to make sure you have imported it correctly:
+
+```{r taking a look at your data}
+#look at the names of all the variables in your dataset
+names(d)
+#get summary information about all the variables in your dataset (e.g. number of observations, number of missing values, minimum value, max value)
+summary(d)
+#look at the first 10 observations
+head(d)
+#look at the last 10 observations
+tail(d)
+#look at all the variable types of all the variables in your dataset
+str(d)
+
+#pull up the whole dataset in a new tab in Rstudio. When knitting the markdown, you can't use this function since the markdown doesn't know how to show the dataset in the final report (the html document).
+# View(d)
+```
+
+If you're at all confused by the mtcars data, you should google it! I cannot stress this enough. Simply looking up coding information online is an essential part of R. If you don't know how to do something in R, someone in stack exchange (stackexchange.com) has probably figured it out!
+
+For preloaded datasets in R, you can find out more about your data and what the variables mean by typing `?[datasetname]` into the console. `mtcars` is a preloaded dataset, so take a look at the help page for this dataset to learn about the variables and what they mean. 
+
+## Data types 
+
+There are four main data types that you'll run into in R. It's important to be familiar with them because it will help to understand and debug some of the errors you'll run into. The four data types are: 
+
+1. Numeric (numbers, integers, doubles)
+2. Character (strings)
+3. Logical (true/false)
+4. Factor (discrete levels; e.g., categories as would be used in ANOVA, such as male, female, and any other gender)
+
+If you re-run the `str(d)` code from above, you'll notice that the output displays the data type for each variable. If you want to change the type of a variable to a factor, for example, you can use the function `as.factor()`. You'll see an example of this below. 
+
+```{r}
+str(d)
+```
+
+```{r}
+d$am <- as.factor(d$am)
+str(d$am)
+```
+The variable `am` tells us whether the cars have automatic transmission or not (automatic = 0, manual = 1). Because these are really categories represented by 0 and 1, rather than meaningfully continuous numbers, we used the function `as.factor()` to tell R that `am` is a factor. You can check that the transformation was successful using `str(variable_name)`.
+
+## Looking at your data
+
+Though it can be useful to look at our data as a whole, we are usually interested in looking at specific variables in our dataset. We can access those variables with this code: `dataset$var_name`--the dataset, a dollar sign, and then the variable name. For example, `d$cyl` would be understood as **"the variable `cyl` within the dataset `d`"**. Alternatively, you can think of this as **"the column `cyl` within the dataset `d`"** if that tickles your fancy. Because we may have multiple data frames in the environment at once (e.g., full datasets, subsets, etc.), it is important that we specify which data frame the variable is in so that R knows where to find it.
+
+### Attaching Dataframes
+
+Sometimes, though, if you're going to be working with one dataframe for a while, it can be helpful to **attach** the dataframe while you're working, and then **detach** it when you're done. When a dataframe is attached, you can just type in the name of the variable, and R will know to look in the attached dataframe. In other words, we are creating a new little environment where we tell R just to work on this data frame and nothing else!
+
+*Keep in mind that while this can be convenient for interactive analyses, it can be a source of tricky bugs (where names overlap) and should be used with caution and discretion.* 
+
+Here, we attach the data frame and then do the same operation that we just did with the variable `am`:
+
+```{r plot_attached_df}
+attach(d)
+
+am <- as.integer(am)
+str(am)
+
+am <- as.factor(am)
+str(am)
+```
+
+Make sure you remember to detach the dataframe when you're done, otherwise R can get confused if you work with a different dataframe with similar variables!
+
+```{r detach_rtw}
+detach(d)
+```
+
+### Checking out your variables
+
+Now that we can access the variables, we can explore them using a number of functions. Along with the basic statistical functions we described above (e.g., `mean()`, `sd()`, `range()` etc.), there are some more comprehensive functions we can use to look at summary statistics. You may notice below that some of these useful functions come from the *psych*  packages. For now, don't worry too much about packages; we will go over them more in-depth in the second R workshop. FYI - At this point in time, just assume that package is synonymous with library. Each of the functions below has a little description for clarity. Also, feel free to use the `?` symbol before an empty function to look it up!
+
+```{r}
+library(psych)
+
+tapply(d$mpg, d$gear, mean) #mean mpg for cars with each possible amount of gears--3, 4, or 5
+?tapply
+
+sapply(d, mean) # means for each variable in the dataset
+?sapply
+```
+Woah. You put two things in the function! Well, more complex functions take multiple inputs. If we look at the output from `?sapply()`, the description says that the function takes X a vector/dataset and FUN the function we want to use. So, we provided the data `d` and the function `mean()`. If we did the same place but replaced `mean()` with `sd()`, the
+`sapply(d, sd)` would output the standard deviation of each column!
+
+Things just got a little harder, so let's take a quick break. You know what happens during breaks? Well, you're probably rolling your eyes just like my mother does whenever I say pretty much anything. You guessed it MORE JOKES!!!!!!
+
+JOKE:
+
+Angela: I used to think correlation implied causation. Then I took a statistics class. Now I don't.
+
+Ben: Sounds like the class helped.
+
+Angela: Well, maybe.....
+
+LOLz
+
+Okay, now let's make things a tad more complicated with functions that take 2+ inputs! I'm going to give you a little a little less explanation beforehand. Please run the code block below and using only the green comments, outputs and `?`, try to figure out what the heck is going on before reading further!
+
+
+```{r}
+summary(d$mpg) #basic summary statistics
+
+describe(d$hp) #"describe" function from "psych" package; more in-depth summary statistics
+
+table(d$carb, d$am) #table of frequencies
+
+# Taking a look at the distribution
+hist(d$wt, col = 'orange', xlab = 'Weights')
+boxplot(d$wt, ylab = 'Weight (in 1000s)')
+```
+
+Note that for many of these functions, the only specifications *required* within the parentheses is the variable name. Can you guess what the options `col =`, `xlab = `, `main = `, and `ylab = ` mean? 
+
+
+You can also look at values for certain *groups* in your data. Below are a few functions that mirror the output from above, but give us the summary statistics based on different groups of the variables. Here, we use `describeBy`, from the "psych" package. It gives us summary statistics of the variable `mpg` for each group of `am`.
+
+```{r}
+describeBy(d$mpg, d$am) # from the "psych" package
+
+```
+
+A slightly more complicated, but useful example of grouping statistics is the function `xtabs()`. The code can be understood as meaning "the *sum* of `mpg`, for each group created by `cyl` by `am`". Because `cyl` has 3 groups and `am` has 2 groups, `xtabs()` will return a 6-cell table with the *sums* of `mpg` for each of those groups; this can be useful for eyeballing differences in means. Notice also that we were able to use the option `data = dataset` (here, data = d) instead of `dataset$variable_name` to individually call each of the variables used in the function. 
+
+
+Additionally, you can get the frequency tables of every data value for a given variable (or crosstable) with the table functions!
+
+```{r}
+#sums of mpg by cylinder values
+xtabs(mpg ~ cyl, data = d)
+
+#sums of mpg by cylinder and manuel/automatic values
+xtabs(mpg ~ cyl + am, data = d)
+
+#frequencies of cylinder values
+table(d$cyl)
+
+#frequencies of cylinder values by automatic versus manual
+table(d$cyl,d$am)
+
+```
+
+
+APPLY YOUR KNOWLEDGE:
+
+Use the mtcars data set!
+
+1. Find the mean, range, and standard deviation of `hp` and `mpg`.
+2. Find the length of the `hp` and `mpg` vectors (or columns). What does the length refer to? 
+3. On average, how many `mpg` do cars with 8, 6, and 4 `cyl` each have?
+
+*Remember:* If you are not sure how to do something, try using the `??subject` function.
+
+```{r}
+#median & range
+
+#length
+
+#mean mps of each type of cyl
+
+```
+
+# Recap
+
+## What we learned in this workshop
+
+Today, we learned a few things to get you started in using R:
+
+*   How to download R and R studio
+*   How to begin using an R Markdown
+*   Basic functions in R
+*   How to import data into R and view that data
+*   How to look at summary statistics for individual variables
+
+
+## Continuing your R education
+
+Honestly, you crushed it! I guess this makes me literally the best teacher ever? Stop it - too many compliments will go to my head. Seriously though, this was great work. I know that this stuff is HARD. It was really hard for me to learn too - but I promise we will get through it.
+
+In the **second workshop** we go into depth about how to manipulate your data and start to capitalize on the power of packages in R. In the **third workshop**, we explore common ways in which you can analyze data in R, and how you can use powerful packages such as *ggplot2* to visualize your data.
+
+NEVER hesitate to ask me questions. There is no question too simple when it comes to coding. Using R is the best and most infuriating process ever..
+
+
+
