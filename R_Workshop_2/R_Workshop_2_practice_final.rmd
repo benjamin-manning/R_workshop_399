@@ -1,0 +1,174 @@
+---
+title: "R practice"
+author: "Benjamin Manning"
+output: html_document
+---
+
+We have a data set in the file experiment.csv, where we’ve run an experiment on and taken some measurements (e.g. self-esteem) for 300 people. 
+Before we do any real data analysis, we want to clean, organize, and explore (a little bit) our data. And that’s exactly what you’ve learned how to do this week!
+Before we go into that, we need to first load in our data and the packages we’ll be using. Open a new R Markdown in R Studio, load in your data, and load in two packages: magrittr and tidyverse. That’s all we need to get rolling!
+
+
+```{r}
+library(magrittr)
+library(tidyverse)
+```
+
+Load the data and now run the code View(dataset_name). Let’s check out the data:
+This data is from an experiment in which participants were assigned to one of two conditions: a control condition and a self-esteem boosting condition (con). 
+After that, participants completed a self-report questionnaire measuring self-esteem. (se1 - se8)
+Finally, they participated in a task in which they had to solve an unsolvable puzzle, and the researchers recorded the total amount of time in seconds the participant worked in the puzzle before giving up as a measure of perseverance. (persec)
+Researchers also have data on participants’ sex (female), age (age), and an identifier (id).
+
+```{r}
+# exp <- read.csv("C:/Users/cbwin/Dropbox (Character Lab)/Resources for learning R/R Workshop 2/experiment.csv", header = TRUE)
+# exp <- read.csv("~/Dropbox (Character Lab)/Resources for learning R/R Workshop 2/experiment.csv", header = TRUE)
+
+exp <- read.csv("experiment.csv", header = TRUE)
+
+View(exp)
+
+```
+
+
+And here’s some extra info on the self-esteem measure:
+Consists of 8 Likert items that the participants answer using a 1-7 scale ranging from complete disagreement to complete agreement.
+For most items a score of 7 indicates high self esteem (e.g., agreeing with “I like myself”).
+Items 3, 5, and 7 are reverse scored, indicating that high scores indicate a low self esteem. (e.g., agreeing with “I think other people are better than me”). Therefore, they need to be recoded.
+
+First, let’s clean the data. It doesn’t look so bad, but there are a few things we can do to clean it up…
+
+Create a new variable called gender, recoding it as a factor (male = 0, female = 1)
+
+Create a new variable in which the perseverance in the puzzles is measured in minutes rather than seconds. Name this variable permin.
+
+also get rid of the extra X variable
+
+```{r}
+
+exp %<>% mutate(
+  
+  gender = factor(female, levels = c(0, 1), labels = c("Male", "Female")),
+  con = con - 1,
+  permin = persec/60
+)
+
+exp %<>% select(-c("X"))
+
+```
+
+Now, in order to use self-esteem in analyses, we need to create a composite variable representing self-esteem:
+Recode the self-esteem items so that they all point in the same direction. 
+
+```{r}
+
+exp %<>% mutate(
+  
+  se3_r = 8 - se3,
+  se5_r = 8 - se5,
+  se7_r = 8 - se7
+  
+)
+```
+
+Generate a self-esteem composite and call it secomp. 
+```{r}
+## The code for our new function (no need--at this point--to understand this code completely).You can copy and paste this code whenever you need it. I still use copied and pasted functions found online years ago!
+gen_comp <- function(data, comp, vector){
+   comp <- enquo(comp)
+   data %>% 
+       rowwise() %>% 
+       mutate(!!quo_name(comp) := mean(c(!!!vector), na.rm = TRUE)) %>% 
+       ungroup()
+}
+
+## Step 1
+vector_se <- quos(se1, se2, se3_r, se4, se5_r, se6, se7_r, se8)
+
+## Step 2
+exp %<>% gen_comp(comp = secomp, vector = vector_se)
+```
+
+Now that we have this, let’s manipulate the variable in a couple common ways we may use in analyses:
+Create a new variable secat and then recode it into low and high levels of self-esteem. 
+Create a new variable secomp_center where you center the participants scores on the se composite. Then create a variable with the absolute value of this measure.
+```{r}
+
+var.center <- function(x) {
+    scale(x, scale = FALSE)
+}
+
+exp %<>% mutate(
+  
+  secat = case_when(secomp > median(secomp) ~ "High",
+                    secomp <= median(secomp) ~ "Low"),
+  secat_f = factor(secat),
+  secomp_c = var.center(secomp),
+  secomp_c_abs = abs(secomp_c)
+)
+
+```
+
+Create a new data set with only the self esteem items and participant id
+```{r}
+exp_se <- exp %>% select(id, starts_with("se"))
+```
+
+Create a new data set with only women.
+```{r}
+exp_fem <- exp %>% filter(gender=="Female")
+```
+ 
+Group by condition and present the highest absolute deviations of self-esteem within each condition
+
+```{r}
+exp %>% group_by(con) %>% summarise(max_abs = max(secomp_c_abs))
+```
+ 
+Group the data by condition and sex, and calculate the average time in minutes that participants worked on the puzzle.
+
+```{r}
+exp %>% group_by(con, gender) %>% summarise(mean_time = mean(permin, na.rm = TRUE))
+```
+
+Select only the sex and self esteem items. Use gather to change the format of the data from wide to long. Use group_by and summarize to generate a data frame where you show the mean and standard deviation of each of the items broken down by sex.
+
+```{r}
+exp %>%
+  select(gender,se1:se8) %>% 
+  gather(item,response,-gender) %>% 
+  group_by(gender,item) %>% 
+  summarise(item_mean = mean(response),item_sd = sd(response))
+
+
+
+#If you want the recoded items
+exp %>% 
+  select(gender,se1,se2,se3_r,se4,se5_r,se6,se7_r,se8) %>% 
+  gather(item,response,-gender) %>% group_by(gender,item) %>% 
+  summarise(item_mean = mean(response),item_sd = sd(response))
+
+```
+
+
+Generate a boxplot of the self esteem composite across experimental condition
+Generate a boxplot of the perseverance measure in minutes across your self esteem categories
+
+```{r}
+exp %$% boxplot(secomp, con)
+exp %$% boxplot(permin, secat_f)
+
+```
+
+
+
+
+
+
+
+
+
+ 
+ 
+
+

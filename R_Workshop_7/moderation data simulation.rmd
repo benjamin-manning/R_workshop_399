@@ -1,0 +1,100 @@
+---
+title: "Untitled"
+author: "Chayce Baldwin"
+date: "11/3/2020"
+output: html_document
+---
+
+
+```{r}
+set.seed(123)
+n.sample <- 531
+x1 <- rbinom(n.sample, size = 1, prob = 0.5)
+x2 <- runif(n.sample, 0, 5)
+a <- 3
+b1 <- -1
+b2 <- 1
+b3 <- -3
+e <- rnorm(n.sample, 0, 5)
+y <- a + b1 * x1 + b2 * x2 + b3 * x1 * x2 + e
+sim.dat <- data.frame(y, x1, x2)
+
+sim.dat %<>% rename(
+  
+  self_est = y,
+  female = x1, 
+  insta = x2
+)
+
+social <- sim.dat
+
+social %>% write.csv("social media.csv")
+```
+
+```{r}
+summary(lm(self_est ~ insta*female, data = sim.dat))
+
+
+
+sim.dat %>%
+  ggplot(aes(x = insta, y = self_est, color = factor(female)))+
+  geom_point(alpha = .4)+
+  geom_smooth(method = "lm")
+```
+
+
+```{r}
+set.seed(123)
+n.sample <- 472
+x1 <- runif(n.sample, 10, 18)
+x2 <- runif(n.sample, 0, 5)
+a <- 50
+b1 <- 2
+b2 <- -35
+b3 <- 3
+e <- rnorm(n.sample, 0, 5)
+y <- a + b1 * x1 + b2 * x2 + b3 * x1 * x2 + e
+sim.dat <- data.frame(y, x1, x2)
+
+sim.dat %<>% rename(
+  
+  gpa = y,
+  age = x1, 
+  grit = x2
+) %>% mutate( gpa = gpa/30 - 1)
+
+#sim.dat %>% write.csv("HS grit.csv")
+
+
+mod2 <- sim.dat %$% lm(gpa ~ grit*age)
+
+
+#install.packages("interactions")
+interactions::interact_plot(mod2, "grit", modx = "age")
+```
+
+```{r}
+
+
+sim.dat %>%
+  ggplot(aes(x = grit, y = gpa, color = factor(female)))+
+  geom_point(alpha = .4)+
+  geom_smooth(method = "lm")
+
+#social <- sim.dat
+
+#social %>% write.csv("social media.csv")
+
+
+mod2 %>% summary
+
+
+sim.dat %<>% mutate(
+  
+  grit.c = scale(grit, scale = FALSE),
+  age.c = scale(age, scale = FALSE)
+)
+
+mod3 <- sim.dat %$% lm(gpa ~ grit.c*age.c)
+```
+

@@ -1,0 +1,750 @@
+---
+title: 'R Workshop 5: Outliers and Psychometrics'
+author: "Chayce Baldwin"
+date: "10/1/2020"
+output: 
+  html_document:
+    theme: cerulean
+    toc: TRUE
+    toc_float: TRUE
+    number_sections: TRUE
+---
+
+```{r loading packages, include=FALSE}
+
+library(tidyverse) # For dplyr, ggplot2, etc.
+library(magrittr) # for pipes
+library(psych) #for factanal, alpha
+
+```
+
+# Before we get started
+
+*Having trouble remembering what exactly an R Markdown is? Want some more resources for learning R?*
+
+-   Review what an R Markdown is [here](#markdown).
+-   Explore further resources for learning R [here](#resources).
+
+## Recap: What we learned in the previous tutorial
+
+In the last two tutorials, we learned about the magic of ggplot:
+
+-   the foundations of the grammar of graphics
+-   most useful univariate and bivariate geoms
+-   common aesthetics
+-   coordinate and facet functions
+-   how to present your graphs: labeling, titles, and themes
+
+## Overview: What we'll learn here
+
+Now that we've learned how to load, clean, and visualize our data, we can dive into the first step of analyses. What *is* the first step? We might call them **preliminary analyses** (surprise, surprise), or, specifically what we will be covering here, **outliers and psychometrics**. These analyses deal with the issue of measurement: Do our statistical estimates approximate the data? Are our measures reliable? How many dimensions do our measures have? Are we justified in making composite scores?
+
+Here's an overview of the topics we'll explore:
+
+-   [Outliers](#Outliers)
+
+    -   Univariate outliers
+    -   Bivariate outliers
+    -   Multivariate outliers
+
+-   [Reliability](#reliability)
+
+    -   Cronbach's Alpha
+    -   Omega
+
+-   [Factor analysis](#factanal)
+
+    -   Exploratory factor analysis
+    -   parallel analysis
+
+# A problem
+
+We have a problem. Our growth mindset intervention seems to have gone terrible wrong.
+
+To see what's wrong, let's load in our data (and properly order our group variable):
+
+```{r}
+
+##reminder: "header = TRUE" tells the function that the top row of our data is, in fact, variable *names* and not actual data; "stringsAsFactors = TRUE" reads in character (aka string) variables (like our group_f variable) as factors rather than characters.
+gm <- read.csv("growth mindset study_cleaned3.csv", header = TRUE, stringsAsFactors = TRUE)
+
+gm %<>% mutate(group_f = ordered(group_f, levels = c("Control", "Self-esteem", "Growth Mindset")))
+```
+
+Like we learned the last two weeks, we can see how our intervention fared by creating plots of means across intervention conditions. And, as you may remember, to create those plots, we first need to manipulate our data into like-form: means for each outcome (`gpa` and `grit`) across intervention condition (`group_f`).
+
+```{r}
+gm_means <- gm %>% 
+              group_by(group_f) %>% 
+                summarise(gpa_mean = mean(gpa, na.rm = TRUE), 
+                          gpa_sd = sd(gpa, na.rm = TRUE), 
+                          grit_mean = mean(grit, na.rm = TRUE), 
+                          grit_sd = sd(grit, na.rm = TRUE))
+```
+
+Now, here's the problem: when we plot our outcomes by intervention group, it's not at all like what we expected. Students in the growth mindset condition seem to have gotten higher grades, but they also seem to be *lower* than the control group in grit. The worst possible outcome for an intervention is that we made students *worse* on what we were trying to help. We also expected the growth mindset condition to impact GPA and grit in similar ways, so we're not sure how to interpret these findings.
+
+```{r}
+gm_means %>%
+  ggplot(aes(x = group_f, y = gpa_mean)) +
+  geom_col() +
+  coord_cartesian(ylim = c(50, 90))
+
+gm_means %>%
+  ggplot(aes(x = group_f, y = grit_mean)) +
+  geom_col()
+
+```
+
+Our plots might be a bit more informative, though, if we add error bars (in this case, standard deviations). What happens if we add error bars?
+
+```{r}
+gm_means %>%
+  ggplot(aes(x = group_f, y = gpa_mean)) +
+  geom_col() +
+  geom_errorbar(aes(ymin=gpa_mean-gpa_sd, ymax=gpa_mean+gpa_sd), width=.2) +
+  coord_cartesian(ylim = c(50, 100))
+
+gm_means %>%
+  ggplot(aes(x = group_f, y = grit_mean)) +
+  geom_col() +
+  geom_errorbar(aes(ymin=grit_mean-grit_sd, ymax=grit_mean+grit_sd), width=.2)
+
+```
+
+The plot thickens. Adding error bars reveals that there is huge variability in both the GPA and grit estimates for the growth mindset group. What does this mean?
+
+Well, it could mean that there is naturally way more variability in the growth mindset group across outcomes--rotten luck. That would mean that we failed to randomize the groups properly, and there *were* baseline differences across groups. When you randomize, you want all groups to be equal across everything--except what you're manipulating (i.e. the intervention).
+
+It could also mean that the growth mindset intervention is helpful for some, and hurtful for others, and that there is some moderating factor that determines whether its good or bad. This would also not be ideal--like I said, we don't want our interventions to *ever* be hurtful.
+
+But, there's one other possible explanation: outliers. How could outliers be a problem? and what is an outlier?
+
+# Outliers {#Outliers}
+
+## What is an outlier?
+
+**An outlier is a response (aka data point) that is so far away from the majority of responses for a population or variable that it is considered extreme.**
+
+## What's the problem with outliers?
+
+Is that such a bad thing? Why can't we just leave outliers alone to live their life of solitude on the edges of our data?
+
+Here are 3 problems outliers can create:
+
+1.  **They bias or influence estimates of analyses**. This can be especially problematic if they substantially influence answers to questions of interest.
+2.  **They increase error variance and reduce statistical power** (aka your likelihood of finding an effect if there is really one there).
+3.  **They can change the odds of making both [type I and type II errors](https://www.simplypsychology.org/type_I_and_type_II_errors.html)**. (See [this paper](https://scholarworks.umass.edu/cgi/viewcontent.cgi?article=1139&context=pare) for an example.)
+
+How do they do all of these horrible things?
+
+Let's look at an example. Run the chunk below and look at the graph. We have 6 data points, with their average represented with the red dot and one standard deviation above and below the mean represented by the red line. Because these data are balanced, the mean represents the typical response of the data, and the standard deviation represents the typical spread perfectly.
+
+```{r}
+
+dots <- c(5, 6, 5, 6, 5, 6)
+num <- c(1, 2, 3, 4, 5, 6)
+dotsnum <- cbind.data.frame(dots, num)
+
+dotsnum %>% ggplot() +
+  geom_point(aes(x = num, y = dots)) + coord_cartesian(ylim = c(1, 10))+
+  geom_point(aes(x = mean(num), y = mean(dots)), colour="red", size = 4) + xlab("Dot Number")+
+  geom_errorbar(aes(x = mean(num), y = mean(dots), ymin = mean(dots)-sd(dots), ymax = mean(dots)+sd(dots)), width = .001, color = "red")
+
+```
+
+But what happens if one of the responses is far away from the others?
+
+```{r}
+
+dots <- c(5, 1, 5, 6, 5, 6)
+num <- c(1, 2, 3, 4, 5, 6)
+dotsnum <- cbind.data.frame(dots, num)
+
+dotsnum %>% ggplot() +
+  geom_point(aes(x = num, y = dots)) + coord_cartesian(ylim = c(1, 10))+
+  geom_point(aes(x = mean(num), y = mean(dots)), color="red", size = 4) + xlab("Dot Number") +
+  geom_errorbar(aes(x = mean(num), y = mean(dots), ymin = mean(dots)-sd(dots), ymax = mean(dots)+sd(dots)), width = .001, color = "red") +
+  geom_point(aes(x = mean(num), y = 5.5), color="lightsalmon1", size = 4) #+
+  #geom_errorbar(aes(x = mean(num), y = 5.5, ymin = 5, ymax = 6), width = .001, color = "lightsalmon1")
+
+```
+
+Now, we can see that the new mean has been weighted toward the outlying response, and no longer represents the typical response, indicated by the lighter red (or more specifically "lightsalmon1") dot that is thhe mean from the last graph. Even more, the standard deviation is inflated and no longer represents the typical spread of the data, either.
+
+What does this tell us? Outliers disproportionately influence these estimates of central tendency and spread, skewing and inflating them much more than the addition of one "normal" data point would.
+
+Practically speaking, this means that if we have outliers, then:
+
+1.  averages and estimates of relationships (e.g. correlation/regression) will be skewed from the true average or estimate of the underlying population and
+2.  measures of variance (including standard deviations and standard errors) will be inflated, making our estimates much less precise, and making it much more difficult to find an effect.
+
+## Where do outliers come from?
+
+When we collect data and run analyses, we are sampling (aka taking a few people) from a larger population that we'd like to study. Outliers are problematic in part because they don't accurately represent the population we would like to study, and therefore make it more difficult to get accurate and precise estimates of what is true for that population, on average. 
+
+Here are 3 main types of outliers:
+
+1.    **Data errors - Does not represent a true response**. Sometimes, we have extreme values from data error. Say, for example, that instead of a 5/5 on the grit scale, someone (somehow), scored a 50/5 on the grit scale. Data errors like this often create scores outside of the possible range of a variable.
+2.    **Legitimate data from the wrong population - sampling from people you don't mean to sample**. Sometimes we may unknowingly include someone who is not from the population we wish to study, and they become outliers. For example, say we are interested in how many practice interviews Wharton freshman have done in their first year, but we accidentally include a senior Wharton student in the sample. This student is likely to have much more experience, and probably more extreme responses, compared to our freshman sample. Another example might be accidentally sampling people on an unusual day, such as the day of a important national event. We meant to sample people from normal circumstances, and unusual circumstances may make for unusual responses.
+3.    **Legitimate data from the right population - extreme responses from people you meant to sample**. Sometimes, we get legitimate responses from the right people and they are still extreme responses. Actually, we might expect this! Assuming our data are normally distributed, about 1% of responses are expected to be far away enough from the mean to be outliers. Even though these are legitimate responses and may warrant study in and of themselves, they may still skew estimates for our analyses of the group as a whole, and may need to be addressed. 
+
+
+## Univariate outliers
+
+Now that we've learned a little bit about outliers and why they may be problematic, how might this apply to our earlier problem with our growth mindset intervention?
+
+The presence of outliers seems like a reasonable explanation for our problems. If you remember, our data had unexpected means and very inflated standard deviations. If outliers are the culprit, then we might expect that they come from data entry errors;  people we didn't mean to sample; or extreme, but legitimate responses. 
+
+Let's check it out.
+
+At the most basic level, we can check for outliers using boxplots. Because we noticed abnormalities in the outcomes (`grit` and `gpa`) across intervention groups, let's plot boxplots for the outcomes across groups. 
+
+Boxplots identify outliers with dots beyond the common range of values. Looking at these can show us quickly if there seem to be any extreme scores.
+
+What do you see?
+
+```{r}
+gm %>% ggplot() +
+  geom_boxplot(aes(x = group_f, y = grit))
+
+gm %>% ggplot() +
+  geom_boxplot(aes(x = group_f, y = gpa))
+```
+
+Because we know that the range of possible values for grit is 1 - 5, there may be a couple of out-of-bounds responses for grit that are causing problems. 
+
+Also, because the range for gpa is 50 - 100 (these schools don't give grades below 50), then it looks like there is an out-of-bounds value for gpa, too. We can quickly see which values mght be out-of-bounds using `dplyr`s ever useful `filter` function:
+
+```{r}
+
+gm %>% select(id, grit) %>% filter(grit < 1)
+gm %>% select(id, gpa) %>% filter(gpa < 50)
+
+```
+
+It looks like our suspicions were correct, and there are two out-of-bounds values for grit and one for gpa. Because these are most likely data entry errors and not legitimate responses, we will not consider them in our analyses, and can essentially "delete" them. We will do this by coding them as missing (`NA` in R means missing). We can do so by recoding our variables to code as missing any values that are out-of-bounds. 
+
+```{r}
+#the function ifelse() works like this: ifelse(if_condition, then_do_this, otherwise_do_this). So here, the first one would be read as: "if grit is less than one, than code as missing, otherwise code the same as the original grit variable".
+
+gm2 <- gm %>% mutate(
+  
+  grit = ifelse(grit < 1, NA, grit),
+  gpa = ifelse(gpa < 50, NA, gpa)
+  
+)
+
+```
+
+Now that we have removed the data errors, let's look at the boxplots again:
+
+```{r}
+gm2 %>% ggplot() +
+  geom_boxplot(aes(x = group_f, y = grit))
+
+gm2 %>% ggplot() +
+  geom_boxplot(aes(x = group_f, y = gpa))
+
+```
+
+It looks like there still might be a few outliers. because we have already dealt with suspected data entry errors, we will assume that the remaining outliers are legitimate, but extreme responses. At this point, unfortunately, it's difficult to tell what causes these outliers, so we will treat them all the same. 
+
+To deal with these outliers, we'll use one of the most basic (and conservative) methods for dealing with outliers: the z-score method. 
+
+The z-score method excludes any values above or below 3 standard deviations from the mean. To do this, the first step is to identify if there are any values beyond this threshold. `filter`, again, is a great way to do this:
+
+```{r}
+
+gm2 %>% 
+  select(id, gpa) %>% 
+  mutate(z_gpa = scale(gpa)) %>% 
+  filter(z_gpa>=3| z_gpa<=-3)
+
+gm2 %>% 
+  select(grit) %>% 
+  mutate(z_grit = scale(grit)) %>% 
+  filter(z_grit>=3 | z_grit<=-3)
+
+```
+
+It looks like there are 3 values of grit that are more than 3 standard deviations below the mean (scale(grit) < -3). Using the code below, let's recode those values to be missing.
+
+
+```{r}
+gm2.no.out <- gm2 %>% mutate(
+  
+  grit = ifelse(scale(grit) < -3, 
+                NA,
+                grit)
+  
+)
+```
+
+Now that we've taken care of outliers, let's look at the effect of the intervention on `grit` and `gpa` again.
+
+```{r}
+gm_means <- gm2.no.out %>% 
+              group_by(group_f) %>% 
+                summarise(gpa_mean = mean(gpa, na.rm = TRUE), 
+                          gpa_sd = sd(gpa, na.rm = TRUE), 
+                          grit_mean = mean(grit, na.rm = TRUE), 
+                          grit_sd = sd(grit, na.rm = TRUE))
+
+gm_means %>%
+  ggplot(aes(x = group_f, y = gpa_mean)) +
+  geom_col() +
+  geom_errorbar(aes(ymin=gpa_mean-gpa_sd, ymax=gpa_mean+gpa_sd), width=.2) +
+  coord_cartesian(ylim = c(50, 100))
+
+gm_means %>%
+  ggplot(aes(x = group_f, y = grit_mean)) +
+  geom_col() +
+  geom_errorbar(aes(ymin=grit_mean-grit_sd, ymax=grit_mean+grit_sd), width=.2)
+
+```
+
+We can see that removing outliers significantly increased the average score of grit in growth mindset condition; Also, the variability in both gpa and grit is much lower. Removing outliers helped correct skewed means and make estimates of variability more precise.
+
+## Multivariate outliers
+
+When you have a larger dataset, using univariate outliers can get annoying quickly. - Scanning each variable takes a lot of time - Even if you wrote code to do it faster, you might end up eliminating too much data
+
+What happens if we want to see if there are outliers on more than two dimensions or variables? Well, we wouldn't be able to visualize it well, because there isn't a good way to graph anything larger than 3 dimensions. We definitely can't just take the z-score, because we don't *have* a z-score that takes into account more than one dimension... If we could only compute some sort of measurement that tells us how different a person's overall response is compared to everyone else... Wait! We do have something *like* a z-score that works for many dimensions: Mahalonobis distance.
+
+Disregarding how hard that is to say, Mahalonobis distance is doing essentially the same thing as a z-score: taking an average and computing how far away something is from that average. Like a z-score, things that are very far away would be considered outliers. However, instead of looking at the average of a *single variable*, like a z-score, Mahalonobis distance assesses the average *pattern of responses* across many variables, and subsequently computes the distance of each individual's pattern of response from the average pattern.
+
+Mahalanobis distances also solve one issue of working with multiple variables: The correlation problem. Why would correlation be a problem in outlier detection? See the following plot:
+
+```{r, echo=F}
+mtcars %>% ggplot(aes(mpg,wt))+geom_point()+
+  geom_point(data = mtcars %>% summarise_all(mean),size=5,color="red")+
+  annotate(geom = "label",x = 25,y= 2.5, label = "A",color="blue",shape=7,size=3)+
+  annotate(geom = "label",x = 25,y= 4,label = "B",color="blue",shape=7,size=3)+
+  labs(y = "Weight", x= "Mileage")
+```
+
+Check out Points A and B. They are the *same distance* from the mean of weight and mileage (About an inch, using my ruler), yet, point B is much more likely an outlier than point A. That's because, in order to accurately calculate multivariate outliers, we need to take into account the correlation between weight and mileage.
+
+This is essentially what Mahalanobis Distances are doing with as many variables as you would like to include. They are comparing each of the rows in your data set (each survey response, for example), with everybody else's responses. Taking correlation into account, it generates one number that represents how far away that response is from all others.
+
+PS: If you thought this was *incredibly interesting*, [here](https://www.youtube.com/watch?v=spNpfmWZBmg) is a youtube video going into more detail.
+
+### How do we compute multivariate outliers?
+
+We can then test these distances for statistical significance; in line with a common standard of Mahalonobis distances, we'll say anyone whose distance is a .001 probability of occurring an outlier.
+
+This is exactly what this custom function (`MO_Detection`) is doing:
+
+1.  Generates a mean vector and a covariance matrix (think correlation matrix) from the data
+2.  Inputs those to generate a vector of Mahalanobis distances
+3.  Calculates what the cutoff would be to exclude cases where the distance is p \< .001, using the chi-squared distribution and the number of variables
+4.  Returns a plot and a data frame without the outliers.
+
+This whole procedure and function was inspired and adapted from [this video](https://www.youtube.com/watch?v=zL66kiX5VZg&t=948s). (Thanks Dr. Buchanan!)
+
+```{r}
+MO_Detection = function (CompleteDataset, AnalyzedDataset, alpha = 0.001) {
+  Means = colMeans(AnalyzedDataset, na.rm = T)
+  Covariance = cov(AnalyzedDataset, use = "pairwise.complete.obs")
+  Distances = mahalanobis(AnalyzedDataset, Means, Covariance)
+  cutoff = qchisq(1-alpha, ncol(AnalyzedDataset))
+  remain = Distances < cutoff
+  PlotData = AnalyzedDataset %>% 
+    mutate(ID = 1:nrow(AnalyzedDataset), 
+           Distance = Distances, 
+           Outlier = factor(remain,labels = c("Yes","No")))
+  n = nrow(AnalyzedDataset) - sum(remain)
+  report = paste(n, "cases were multivariate outliers")
+  print(report)
+  p = ggplot(PlotData, aes(ID, Distance, color = Outlier)) + 
+    geom_point() + 
+    labs(title = "Multivariate Outliers",
+         subtitle = report)
+    theme(legend.position = "bottom")
+  print(p)
+
+  return(CompleteDataset %>% filter(remain))
+}
+```
+
+Lets try removing multivariate outliers from our Growth Mindset Intervention Study. The `MO_Detection` function takes as input the complete dataset, the dataset with the variables we'll use (only numeric variables), and the alpha level (set as default at the .001 level).
+
+```{r}
+gm_noout = MO_Detection(gm, gm[7:9])
+```
+
+Explore: Try changing the alpha value to something even more improbable (say .00000000001), or more probable (say .30) and see how changing that parameter affects how many values are classified as outliers. (Note that .001 is customary).
+
+```{r}
+
+```
+
+# Reliability {#reliability}
+
+After we take care of outliers, another very important issue is measurement, what we call **psychometrics**. One of the most important psychometric properties of our data is reliability. 
+
+For reliability discussion today, let's talk (and learn how to compute) Cronbach's Alpha.
+
+In psychology, we often use self-report scales with multiple items; create composites of those scales; and measure "reliability" of those scales using Cronbach's Alpha. However, most people have a hard time articulating what Cronbach's Alpha *actually* means. What is Cronbach's Alpha actually measuring? What does it mean to be "reliable"? How do you compute Cronbach's alpha in R? And how do you interpret it?
+
+Let's dive in.
+
+First, what is Cronbach's Alpha actually measuring?
+
+Let's look at an example that might help.
+
+First, load in the data. Also, if you haven't already, load in the package `psych`.
+```{r}
+gm.full <- read.csv("growth mindset study.csv")
+
+library(psych)
+```
+
+For simplicity, let's only keep the variables that we will be using for our alpha calculation: grit items. One slick way to do this is to use `select` from `dplyr` in conjunction with the helper function `starts_with`:
+```{r}
+
+gm.full %<>% select(starts_with("grit"))
+
+```
+
+Computing Cronbach's alpha in R is simple. Just use the function `alpha` from the `psych` package, and insert your data you want analyzed as the argument. Here, let's save the output as an object called `grit.a`, then take a look.
+
+```{r}
+grit.a <- alpha(gm.full)
+
+grit.a
+```
+
+Yikes--that's a lot to look at, and we don't even know what 95% of it means! In a few minutes I'll show you a custom function that is much more user friendly, but for now, here's the alpha:
+
+```{r}
+grit.a$total$raw_alpha
+```
+
+## What is alpha actually measuring? How do you compute alpha?
+
+It's actually pretty simple. Here's the formula for Cronbach's alpha:
+
+$\frac{k\bar{r}}{1+(k - 1)\bar{r}}$
+
+where:
+
+*   k = the number of items
+*   $\bar{r}$ = the average inter-item correlation
+
+That's not so hard--it really only needs two numbers to work. But what exactly is the "average inter-item correlation"? 
+
+Here's an explanation: Take the first item of our scale, "grit1", correlate it with each other item--"grit2", "grit3", and "grit4"--and average those correlations, and we have the average inter-item correlation for "grit1". If we then take the average inter-item correlation *for each item* and average those together, we get the average inter-item correlation for the scale, what we are calling here $\bar{r}$.
+
+To put it into words, computing Cronbach's alpha is **multiplying** the number of items **by** the average inter-correlation among those items **divided by** the total variance in the composite--all of the items together.
+
+So, we could say Cronbach's alpha is **the proportion of the total variance of the items that is explained across items, or varies together across items**.
+
+Let's try it ourselves and see if we get the same value as the `alpha` function.
+
+First: we can let `alpha` do some of the work for us--from the output we can extract the avergae inter-item correlations.
+
+```{r}
+rbar <- grit.a$total$average_r
+```
+
+Second: We have 4 items, so we'll set k = 4
+
+```{r}
+k <- 4
+```
+
+Third: plug those values into the formula
+
+```{r}
+alpha.by.hand <- (k*rbar)/(1+(k - 1)*rbar)
+
+alpha.by.hand
+```
+
+Great, we were able to get the result: a = .90! This means that among the total variation in the scores, 90% of the variance is explained by the items in the scale varying together.
+
+And what exactly does it mean to vary together? Really it just means to correlate: when one goes up, the other goes up; when one goes down, the other goes down. 
+
+## What is a "good" alpha?
+
+The standards for the field (though somewhat arbitrary) are clear: a = .70 is acceptable, a = .80 is good, and a = .90 is great. Anything under a = .65 will generally require a strong rationale for why that level of inconsistency is acceptable. 
+
+## In sum, what is alpha?
+
+So, Cronbach's alpha is a measure of **consistency of responses** in the data among the items of a scale.
+
+The smaller the shared variance is, the higher the error variance, or unexplained variance is. This means that unaccounted variation is playing a bigger part in the measure (if the items are combined), introducing more random noise and *inconsistency*. Herein, as error variance increases, the composite will be *a less consistent* measure. 
+
+## In sum what is alpha not?
+
+Alpha is:
+
+*   **NOT A measure of reliability of the scale**. This is a little nitpicky, but alpha is not a measure of reliability of the scale, it is a measure of the reliability (consistency) of responses in *your data*. Why does that matter? That matters because it means that Cronbach's alpha is expected to vary across data sets--it shouldn't (necessarily) be perfectly consistent across data sets because correlations between items will vary. Rather, it is a measure of the consistency of your responses and should be computed for each data set.
+*   **NOT a measure of unidimensionality**. High alpha does not imply unidimensionality. Actually, multidimensional data can still have an adequate alpha, but on the flip side, Cronbach's alpha does *assume* unidimensionality, and thus should not be performed on multidimensional data. 
+*   **NOT an indication that your items are highly correlated**. Importantly, alpha is heavily influenced by number of items as well as correlation strength. For example, 60 items correlated at an average of r = .07 will have an alpha of .83. Another example: we might consider an alpha of .73 acceptable, but for a scale of 5 items, this would mean an average inter-item correlation of only r = .35. Acceptable alpha does not imply high inter-item correlation. 
+*   **NOT justification for combining scale items into a composite**. Factor analysis is better suited for this as it determines underlying factors in the data and gives estimates of the amount of information retained in a composite score from the constituent items.
+
+## A function for formatted alpha output
+
+Last but not least, here is a function that will give you easier to swallow Cronbach's alpha output. The three middle columns represent the different types of correlations computed, which can be informative, but are not always necessary. Most informative is "alpha if dropped"--this tells you what the cronbach's alpha would be if you dropped that item from the scale. 
+
+Let me know if it doesn't work for you and I can help troubleshoot!
+
+```{r}
+#install.packages("kableExtra")
+#install.packages("devtools")
+#devtools::install_github("crbwin/clnR")
+library(knitr)
+library(kableExtra)
+
+q_grit <- quos( grit1, grit2, grit3, grit4)
+clnR2::alphatize(gm.full, q_grit)
+
+```
+
+
+# Factor analysis {#factanal}
+
+So far, we've been happily creating composites from items, without putting too much thought into important questions: 
+
+-     Are all these questions related enough to justify adding them together? 
+-     Should we add all the items together into a single composite or should we create more composites? 
+-     Are all items working properly, or are there some that are not working well? 
+-     If we are summarizing ten columns (for ten items), into one (for the composite), how much information are we loosing?
+
+Factor analysis, and related techniques, help us answer all of these questions.
+
+Lets start by loading our data.
+
+```{r}
+sps = (read.csv("Confidence in Science.csv"))
+# View(sps)
+```
+
+The data (this time its real), asks participants for their perception of efficacy of scientific (e.g. medicine) and pseudoscientific practices (e.g. Tarot).
+
+Say we want to work with a smaller number of variables (rather than the full 13), and we think these items represent one or two underlying constructs. Factor analysis will help us make those decisions and justify how we make our composites.
+
+Most likely the items will form a single factor. A continuum starting in complete belief in science and disregard for pseudoscience, and ending in the opposite, people who distrust the scientific establishment in favor of more 'alternative methods'
+
+![Fig 1. A single factor](1 Factor.png)
+
+Here are the steps
+
+## Are the items correlated enought to warrant a composite
+
+The first condition is that the items need to be correlated enough to justify adding some of them together. It makes sense to add related items ("Are you happy", "Are you cheerful") but you wouldn't add unrelated items ("I like to keep stuff in order").
+
+Let's see how correlated our items are.
+
+```{r}
+sps %>% cor() %>% round(2)
+```
+
+We can see several high correlations on the correlation matrix.
+
+There are two tests that we can use to analyze how good the correlations are. One of them is Keyser, Meyer, and Olkin's sample adequacy statistic (KMO for short), and the other is Bartlett's Sphericity test.
+
+Let's start with KMO.
+
+```{r}
+KMO(sps)
+```
+
+We can see that overall KMO is .90 (which is good), and individual item KMOs are also above .7, which is also good. Here are some interpretation guidelines for KMO.
+
+-   .00 to .49 unacceptable.
+-   .50 to .59 miserable.
+-   .60 to .69 mediocre.
+-   .70 to .79 middling.
+-   .80 to .89 meritorious.
+-   .90 to 1.00 marvelous.
+
+Yes, those are the actual adjectives used in the original guidelines! 
+
+Bartlett's sphericity test compares the correlation matrix to an identity matrix (one where all correlations are 0). Let's see how that goes.
+
+```{r}
+psych::cortest.bartlett(sps)
+```
+
+Bartlett's sphericty test shows that there *are* correlations ($\chi^2 = 2770.09$ [78, $n = 316$ ],$p < .001$).
+
+With that out of the way, our next question is: How many factors should we extract?
+
+## How many factors?
+
+There is no set answer to this question but there are a couple of useful techniques.
+
+One of the most common (it's the default in SPSS) is to extract as many factors as have eigenvalues greater than one. Let's see what happens:
+
+```{r}
+sps %>% cor %>% eigen(only.values = T)
+```
+
+We can see that there are two factors with eigenvalues greater than one. According to this method, we should then extract two factors.
+
+A related technique plots these eigenvalues and uses a more visual approach. Look for a point of inflection, where the line goes from vertical to horizontal. This will yield the optimal number of factors to extract. This is based on the principle of *diminishing marginal returns*. The first eigenvalue always explains a lot of variance, and the following ones explain less and less. The inflection point can be understood as the point of optimum balance between information loss (i.e. keeping as much information as possible) and efficient compression (i.e. doing that in the least number of factors possible).
+
+```{r}
+sps %>% cor %>% eigen(only.values = T) %>% `$`(values) %>% enframe() %>% ggplot(aes(name,value))+geom_point()+geom_line()
+
+```
+
+A more nuanced approach to this problem is parallel analysis. This generates random data from your dataset to replicate this process more realistically to your own data. By default, this uses Pearson correlations, but you have the option to use `cor = "poly"` in order to use polychoric correlations. While polychoric correlations are "more technically correct" for likert style items, the results are often the same and polychoric correlation can be a hassle (sometimes they take too long, or don't work at all).
+
+```{r}
+psych::fa.parallel(sps)
+#psych::fa.parallel(sps,cor = "poly") #Does the same but based on polychoric rather than pearson correlations.
+```
+
+The analysis suggests the extraction of 2 components or 3 factors. We won't go into the distinction between components and factors, as it is not consequential for our purposes.
+
+Finally, there is an array of other techniques, like Very Simple Structure complexity (VSS), the Minimum Average Partial method (MAP) and Bayesian Information Criterion (BIC). Those can be analyzed using the `nfactors()` command.
+
+```{r}
+psych::nfactors(sps)
+```
+
+A correlation matrix can also help you decide how many factors you want to extract. Here, bigger circles represent bigger correlations (red = negative, blue = positive).
+
+```{r}
+# install.packages("corrplot")
+
+sps %>% #data
+  cor() %>% #generate correlations
+  corrplot::corrplot(tl.col = "black",order = "hclust") #visualize. Hclust orders correlations.
+```
+
+In this case, we see that there are two groups of items that are unrelated with each other, but correlated within each group. It seems like science and pseudoscience represent independent factors rather than two ends in a single continuum.
+
+![Fig 2. Two independent factors](2 Factors.png)
+
+Based on our theoretical intuitions and all of the evidence we have seen, it makes sense to try and extract two factors. How would we go about doing that?
+
+## How do we extract factors?
+
+We are finally ready to run factor analysis. So far we figured out that our data is factorizable and that 2 factors are likely the optimum.
+
+**Factor extraction** means generating linear combinations of the variables (13 items) to generate factors (2 in our case). A **linear combination** is just a weighted average of the scores of each participant for each item, to represent the factors. The weights are called factor loadings and represent the correlation between the item and the factor.
+
+We still need to make one more decision before extracting our factors. Which factor extraction method will we use? Here are some and their use cases.
+
++---------------------------------------+------------------------------------------------------------------------------------------------------------+
+| Method                                | Use case                                                                                                   |
++=======================================+============================================================================================================+
+| Principal Components Analysis (PCA)   | Is not "really" factor analysis, but as SPSS default, it is also a default in a lot of published research. |
++---------------------------------------+------------------------------------------------------------------------------------------------------------+
+| Principal Axis Factoring (PAF)        | Usually used with normal and continuous data.                                                              |
++---------------------------------------+------------------------------------------------------------------------------------------------------------+
+| Maximum Likelyhood (ML)               | Usually used with normal and continuous data.                                                              |
++---------------------------------------+------------------------------------------------------------------------------------------------------------+
+| Unweighted Least Squares (ULS/MinRes) | A more robust variant that works better with non-normal likert type data                                   |
++---------------------------------------+------------------------------------------------------------------------------------------------------------+
+| Unweighted Least Squares (OLS)        | A more robust variant that works better with non-normal likert type data                                   |
++---------------------------------------+------------------------------------------------------------------------------------------------------------+
+| Weighted Least Squares (WLS)          | A more robust variant that works better with non-normal likert type data                                   |
++---------------------------------------+------------------------------------------------------------------------------------------------------------+
+
+All of these are available in the `fa()` function, using the `fm =` argument. PCA is not available in `fa()` and can be accessed using `principal()`. Our default recommendation for likert items is the ULS factorization method (`fm = "ULS`). This is `fa`'s default.
+
+```{r}
+principal(r = sps,nfactors = 2)
+fit = fa(r = sps,nfactors = 2,fm = "uls")
+
+fit
+```
+
+Here we run factor analysis and save the results in an object called `fit`.
+
+Before interpreting the results, we should take a look at rotation, the last step, which will improve the interpretability of the results and separate the two factors more clearly.
+
+## Rotation?
+
+As with factor extraction, there is a large array of rotation methods. The only thing that really matters is whether you are choosing an oblique or an orthogonal rotation. Orthogonal means that you are *forcing* the factors to be perfectly uncorrelated ($r = 0$), whereas in oblique rotation the factors are *allowed* to correlate and the correlation between the factors is calculated.
+
+This should be decided on the basis of theory and empirically--whether your items are actually correlated across factors. Do note, though, that in psychology, factors are almost always correlated. I usually start with an oblique rotation and keep it if the factors are correlated, and I might try an orthogonal rotation if they are unrelated. The rotation is chosen with the `rotate =` parameter within `fa()`.
+
+Some orthogonal rotations: "varimax", "quartimax", "bentlerT", "equamax", "varimin", "geominT" and "bifactor" Some oblique rotations: "Promax", "promax", "oblimin" (default), "simplimax", "bentlerQ, "geominQ" and "biquartimin" and "cluster".
+
+Let us see our rotated factor loading matrix and see how the items are arranged.
+
+```{r}
+fit = fa(r = sps,nfactors = 2,fm = "uls",rotate = "oblimin")
+print.psych(fit,cut=.3,sort=T)
+```
+
+The first part of the output gives us what we want the most: our precious *factor loading matrix*. We use the `print.psych` command that allows us to hide small factor loadings (\< .3) and sort the factor loading matrix. This simplifies readability and interpretability. We see a nice pattern where all items load highly on their respective factor and have low or null loadings on the different factor. (Try removing the `cut = .3` to see all factor loadings).
+
+We don't have many problems in this data but here are a few potential problems: 
+
+-     Items with very low loadings in all factors: The item doesn't accurately represent any of the factors 
+-     Item that loads highly in a factor where it "shouldn't" belong: The item for some reason correlates more with theoretically unrelated (rather than related) items. 
+-     Items with high loadings in two factors: The item lacks discriminant validity. It measures two things instead of one. 
+-     The sign of the loading is off: A positive sign in the factor loading implies that the item is directly related with the factor. Negative loadings imply that there is an inverse relation. For example: "I feel sad" might load negatively in a measure of happiness.
+
+The second part of the output gives us *how much of the original variance* of the 13 items is preserved on our two factor solution. We see that the first factor explains 44% and the second one 18% for a combined 62% of the variance. Take a second to evaluate how good a deal this is. You transformed 13 items into 2 variables (15%), but kept 62% of the information.
+
+After that we have our factor intercorrelations. In this case the factors are correlated at -.01, meaning the factors are practically orthogonal. We could re-run our analysis using orthogonal rotation (e.g. Varimax). What this means is that trusting science doesn't mean you will distrust pseudoscience. Believing pseudoscience doesn't mean you distrust science.
+
+We can visualize our results using the plot command. Each axis represents a factor, and points represent items with x and y loadings in each axis. Items on the axis load on a single factor. Items near the origin have loadings that are too low. Items far from the axis, standing in no-man's land have worse discriminant validity.
+
+```{r}
+plot(fit)
+```
+
+Here, we see that items 4 (psychotherapy) and 7 (neurolinguistic programming) are not as close to their respective axes, indicating small cross loadings. Most other items are right on the axes, meaning they load more univocally on their respective factors.
+
+Finally lets use factor scores to see how the 316 people land on these quadrants. BTW, factor scores are the factor analysis cousin of simple composites. They take into account factor loadings to calculate some sort of weighted average of the level of each factor for each person. There are several ways to calculate them, and we won't go into detail here, but read [this](https://scholarworks.umass.edu/cgi/viewcontent.cgi?article=1226&context=pare) if you are interested.
+
+Since factor scores have means 0, we can use that as a mean split to categorize our participants.
+
+```{r}
+fit$scores %>% as.data.frame() %>% 
+  rename(Pseudoscience = ULS1,
+         Science = ULS2) %>% 
+  mutate(Category = case_when(Science>0 & Pseudoscience>0 ~ "Believes all",
+                              Science<0 & Pseudoscience<0 ~ "Skeptic",
+                              Science>0 & Pseudoscience<0 ~ "Only Science",
+                              Science<0 & Pseudoscience>0 ~ "Only Pseudocience")) %>% 
+  ggplot(aes(Science,Pseudoscience,col=Category))+
+  geom_point()+
+  geom_hline(yintercept = 0)+
+  geom_vline(xintercept = 0)+
+  labs(title = "Belief in science is unrelated from belief in pseudoscience")+
+  theme(legend.position = "bottom")
+```
+
+What did we learn? That factor analysis is a *lot* of fun. You have enough information to impress your crush next time you see him or her at a party. Kidding aside, Factor Analysis is a powerful technique that allows you to analyze the interrelations between items. It analyzes the pattern of responses people give to your items to find a way to compress the information in a large number of items into a smaller number of factors while retaining the maximum amount of information. This helps us understand how our measure works and justifies the way we use concrete items to refer to unobservable constructs.
+
+Here is your checklist: 
+
+1.    Are the items correlated enough? Take a glance at the correlations, see if Bartlett's Sphericity Test (`cortest.bartlett`) is significant, and Kaiser Meyer Olkin's Sampmling Adequacy Measure is... well, adequate (`KMO`). 
+2.    Decide how many factors you want to extract. Use a combination of theory, visual inspection of the scree plot (`data %>% cor %>% eigen`), and more advanced methods like parallel analysis (`fa.parallel`) to decide. 
+3.    Choose a factor extraction method (most likely unweighted least squares `fa(data,nfactors,fm='uls)` if you are using likert style items). 
+4.    Choose whether you want orthogonal (e.g. `rotate = "varimax"`), or oblique (e.g. `rotate = "oblimin"`) rotation. Usually factors are related enough to justify oblique rotation, but if upon inspection factors are not correlated, orthogonal rotation might be simpler. 
+5.    Inspect your factor loading matrix to see how good are your items at representing the latent factors. 
+6.    See how much information you could retain. 
+7.    Celebrate because you are finally done!
+
+# Farewell
+
+Way to go! You are now a master of outliers, and helped us solve our failed growth mindset intervention study. You are also an expert psychometritian, and conducted reliability and factor analysis of likert style questionnaires.
+
+See you next week!
+
+# Review: End Notes
+
+## Some useful resources to continue your learning {#resources}
+
+A useful resource, in my opinion, is the [stackoverflow](http://stackoverflow.com/) website. Because this is a general-purpose resource for programming help, it will be useful to use the R tag (`[R]`) in your queries. A related resource is the [statistics stackexchange](http://stats.stackexchange.com/), which is like Stack Overflow but focused more on the underlying statistical issues. **Add other resources**
+
+## What's an R Markdown again? {#markdown}
+
+This is the main kind of document that I use in RStudio, and I think its one of the primary advantage of RStudio over base R console. R Markdown allows you to create a file with a mix of R code and regular text, which is useful if you want to have explanations of your code alongside the code itself. This document, for example, is an R Markdown document. It is also useful because you can export your R Markdown file to an html page or a pdf, which comes in handy when you want to share your code or a report of your analyses to someone who doesn't have R. If you're interested in learning more about the functionality of R Markdown, you can visit [this webpage](https://rmarkdown.rstudio.com/lesson-1.html)
+
+R Markdowns use **chunks** to run code. A **chunk** is designated by starting with {r}`and ending with` This is where you will write your code. A new chunk can be created by pressing COMMAND + ALT + I on Mac, or CONTROL + ALT + I on PC.
+
+You can run lines of code by highlighting them, and pressing COMMAND + ENTER on Mac, or CONTROL + ENTER on PC. If you want to run a whole chunk of code, you can press COMMAND + ALT + C on Mac, or ALT + CONTROL + ALT + C on PC. Alternatively, you can run a chunk of code by clicking the green right-facing arrow at the top-right corner of each chunk. The downward-facing arrow directly left of the green arrow will run all code up to that point.

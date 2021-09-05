@@ -1,0 +1,530 @@
+---
+title: "Visualization II"
+author: "Benjamin Manning"
+date: "7/5/2021"
+output: 
+  html_document:
+    theme: cerulean
+    toc: TRUE
+    toc_float: TRUE
+    number_sections: TRUE
+---
+
+```{r, include = FALSE}
+library(Hmisc)
+library(tidyverse)
+library(haven) # for reading in data
+library(magrittr) # for pipes
+```
+
+
+# Before we get started
+
+*Having trouble remembering what exactly an R Markdown is? Want some more resources for learning R?*
+
+*   Review what an R Markdown is [here](#markdown).
+*   Explore further resources for learning R [here](#resources).
+
+
+## Recap: What we learned in the previous tutorial
+
+In the last tutorial, we started our ggplot adventure. Was it more fun than bringing the ring to Mordor? Definitely. More specifically, we dived into multivariate plots with geom_point, geom_col and geom_line()
+
+## Overview: What we'll learn here
+
+What we'll look at here:
+
+**Visualization**
+  + simple plots with different geoms
+  + Non data related topics on plots
+
+**********************
+
+Let's start by reading in our data:
+
+```{r load_d, include=FALSE}
+# write csv
+write_csv(mtcars, "mtcars.csv")
+
+# load a csv file
+d <- read_csv("mtcars.csv")
+d1 <- read_csv("foreign.csv")
+d <- cbind(d, d1)
+
+d$am <- as.factor(d$am)
+d$gear = as.factor(d$gear)
+
+```
+
+...And picking up right where we left off.  
+
+JK. First, we should start with something we missed from last week: using a third variable in a bar plot. Say you want to make a bar chart for the mean level of gas mileage `mpg` on the y axis, and the number of gears `gear` in the x axis, but you want to compare these results between automatic transmission vs. manual transmission cars `am`. To do that, we need to do a bar chart like the ones we've seen previously, but including another aesthetic for the third variable. Here's how you do it. Try changing `position = "dodge"` for `position = "stack"` and see what happens. 
+
+```{r}
+d %>% 
+  group_by(gear,vs) %>% 
+  summarise(mpg = mean(mpg)) %>% 
+  ggplot(aes(gear,mpg,fill=factor(vs)))+geom_col(position = "dodge")
+```
+Hey, what rhymes with geom? Seriously, I can't think of anything while I'm writing this, so please tell me. Big gnome? Go home? Capital Ohm? The city Rome? kinda...
+
+### Geoms for univariate or descriptive plots
+
+Geom              | What It Does
+------------------|------------------------------------------------------------------------
+*Univariate or descriptive plots* |
+`geom_bar()`      | To plot a bar graph/histogram for a single categorical variable
+`geom_freqpoly()` | To plot frequencies by class of a variable
+`geom_histogram()`| To plot distribution/frequencies of single continuous variable
+`geom_density()`  | To plor distribution of single or various continuous variables
+`geom_violin()`   | To plot distributions. Similar to a density plot, but on both sides. Useful for comparing distributions among factors
+`geom_qq()`       | To plot residuals with a QQ plot
+
+
+`geom_bar()` plots the count of a single factor variable, whereas `geom_histogram()` plots the count of a single continuous (i.e. numeric) variable.
+
+```{r}
+d %>% 
+ggplot() +
+  geom_bar(aes(x = carb))
+
+d %>% 
+ggplot() +
+  geom_histogram(aes(x = hp))
+
+```
+
+**Practice**
+Note the warning message: "`stat_bin()` using `bins = 30`. Pick better value with `binwidth`." Redo the plot using different values for binwidth = , inside the geom_histogram() call.
+
+Here are some other geoms for descriptive plots. Play around with some stuff! Change lots of the variables to figure out what's going on. Add stuff, take things away; be free my child. Also, make sure you understand the plots themselves - creating legible plots is a statistician's greatest skill.
+
+```{r}
+d %>% 
+  ggplot(aes(mpg)) + 
+    geom_freqpoly(aes(colour = wt), binwidth = 1/4)
+
+#Box plot
+d %>% 
+ggplot(aes(x = gear, y = mpg)) +
+  geom_boxplot()
+
+d %>% 
+ggplot(aes(x = carb, y = mpg)) +
+  geom_boxplot() +
+  coord_flip()
+
+#violin plots
+d %>% 
+  ggplot(aes(x = am,y = mpg))+
+  geom_violin()
+
+#visualize covariation between counts:
+d %>% 
+ggplot() +
+  geom_count(aes(x = am, y = foreign))
+
+
+# you can rewrite this plot more concisely:
+# faithful dataframe holds the eruption times in minutes for the Old Faithful geiser in Yellowstone National Park
+ggplot(data = faithful, aes(x = eruptions)) + 
+  geom_freqpoly(binwidth = 0.25)
+
+ggplot(faithful, aes(eruptions)) + 
+  geom_freqpoly(binwidth = 0.25)
+# How would you interpret this graph?
+```
+
+## Common aesthetics
+
+Aesthetic             |  What It Does
+----------------------|---------------------------------------------------------------------
+`color =`             | Separates groups by color of obs
+`shape =`             | Separates groups by shape of obs
+`size =`              | Separates groups by size of obs
+`alpha =`             | In datasets with many overlapping data points, makes less overlapping obs more transparent and more overlapping obs more solid, in order to see where your data clusters most heavily
+`linetype = `         | Separates groups with different line types: filled, dotted, etc.
+`fill = `             | For bars, the color of the inside of the bar. Color would do the border
+
+Here are some common aesthetics you might try using. As you see below, if you apply aesthetics as global aesthetics in `ggplot()` they will apply to all layers. As we saw, changing features outside of `aes()`, though, (e.g. color), need to be specified in each layer. Remember, color can be edited inside or outside an aesthetic, but his has a different outcome!
+
+```{r}
+d %>% 
+  ggplot(aes(x = mpg, y = wt)) + 
+  geom_point() +
+  geom_smooth(method = "lm")
+
+d %>% 
+  ggplot(aes(x = mpg, y = wt, color = gear)) + 
+  geom_point() +
+  geom_smooth(method = "lm")
+
+
+d %>% 
+  ggplot(aes(x = mpg, y = wt)) + 
+  geom_point(color = "red") +
+  geom_smooth(method = "lm", color = "red")
+
+```
+
+Also notice that not all aesthetics work for all types of geoms--"shape", for example, doesn't work with `geom_smooth`, so the global aesthetic `shape = gear` ignores that layer. You can, however, add another aesthetic that *does* apply to `geom_smooth()`, such as "linetype". I've said this before and I'll say it again: use `?` to find out more about any function! All geoms have a list of their acceptable aesthetics if you search them.
+
+```{r}
+?geom_smooth
+
+d %>% 
+  ggplot(aes(x = mpg, y = wt,shape=gear)) + 
+  geom_point() +
+  geom_smooth(method = "lm")
+
+d %>% 
+  ggplot(aes(x = mpg, y = wt, shape = gear, linetype = gear)) + 
+  geom_point() +
+  geom_smooth(method = "lm")
+
+
+d %>% 
+  ggplot(aes(x = mpg, y = wt)) + 
+  geom_point(shape = "square") +
+  geom_smooth(method = "lm")
+```
+
+  
+## Faceting
+
+Sometimes, you want to BREAK DOWN and cry after a long day - I know I do. However, sometimes, you also want to BREAK DOWN a graph based on groups. When using colors or other graphical devices where it's not possible (they are already mapped to other variables) or the resulting graph would look too crowded, you can use faceting to repeat the graph subset by each level of the faceting variable. This can be both a final data visualization step or an intermediary step for you to get your bearings!
+  
+```{r}
+#NOTE - FACET_GRID AND FACET_WRAP can be "weird" sometimes and use different syntax than other ggplot items. If you're struggling to use them, do the help function or just google examples :)
+
+#Makes three scatterplots, one for each gear category.
+d %>% 
+ggplot() + 
+  geom_point(aes(x = mpg, y = wt)) + 
+  facet_wrap(~ gear, nrow = 1)
+
+#Makes six scatterplots, resulting from all the possible combinations of am (2) and cyl (3).
+d %>% 
+ggplot() + 
+  geom_point(aes(x = mpg, y = wt)) + 
+  facet_wrap(am ~ cyl)
+
+#facet_grid organizes the information better when using two variables for faceting.
+d %>% 
+ggplot() + 
+  geom_point(aes(x = mpg, y = wt)) + 
+  facet_grid(am ~ cyl)
+
+
+d %>% 
+ggplot() + 
+  geom_point(aes(x = mpg, y = wt)) + 
+  facet_wrap(~ cyl)
+
+```
+
+## Manipulating your axes and scaling
+
+Sometimes, you will want to manipulate the way your graphs look. You might want to flip the graph 90 degrees to make stuff look better, or use a transformation in the axis to show your data. Here's how:
+
+### Coordinate Systems
+
+For flipping the axes, you can use coord_flip. This is particularly useful when you have a lot of text on the variables in the x axis. See the following example.
+
+```{r}
+mtcars %>% #Cars Dataframe
+  rownames_to_column("Name") %>%  #Makes the names of the car a variable
+  sample_frac(.50) %>%  # Keeps only 50% of randomly selected cases (just to plot less cars)
+  ggplot(aes(Name,mpg))+
+  geom_col()+
+  coord_flip()
+```
+
+Now take out the coord_flip() argument and see what happens. Welp - that was a mess! We can see why coord_flip() is a nice little trick
+
+What if you want to zoom in on a plot. Inside the coord_cartesian function, you can use the xlim and ylim arguments to specify what ranges of data you want to show. Here is an example.
+
+```{r}
+mtcars %>% 
+  ggplot(aes(wt,mpg))+
+  geom_point()
+
+mtcars %>% 
+  ggplot(aes(wt,mpg))+
+  geom_point()+
+  coord_cartesian(xlim =c(3,4),ylim = c(15,20))
+```
+Zooming in is particularly useful when there are a few misleading outliers in your data and they screw up the axes!
+
+Say, now that you are plotting a variable that isn't linear. A great example for this is the spread of the coronavirus, especially during its first stages. Here is how the plot would look like by default.
+
+
+```{r}
+Corona = read.csv("https://covid.ourworldindata.org/data/owid-covid-data.csv",header = T,sep=",",stringsAsFactors=F)
+Corona$date = as.Date(Corona$date)
+Corona %>% 
+  filter(location == "United States") %>% 
+  filter(date < as.Date("2020-05-13")) %>% 
+  ggplot(aes(date,total_cases))+
+  geom_point() +
+  geom_line()
+```
+
+Now let's add scale_y_log10, and see how that improves the plot (another way to deal with strange outliers our scale problems)
+
+```{r}
+Corona %>% 
+  filter(location == "United States") %>% 
+  filter(date < as.Date("2020-05-13")) %>% 
+  ggplot(aes(date,total_cases))+
+  geom_line()+
+  scale_y_log10()
+```
+Look at that! Taking the log of the y-axis gives us a different picture of the plateaus and movements of the pandemic. You've probably seen a lot of covid graphs over the past year - always make sure you know that the axes are before interpreting a visual.
+
+## Non-data aspects of your ggplot
+
+Now let's return to our first graph looking at `mpg` and `wt`. *ggplot* makes it easy to make these graphs look really nice and professional. What can we do to prep them to present to others?
+
+```{r}
+d %>% 
+ggplot(aes(mpg, wt)) +
+  geom_point(aes(color = am)) +
+  geom_smooth(se = FALSE)
+```
+
+
+There are a few different ways to change the descriptive text on your ggplots, but one easy way is using `labs()` (short for "labels"). For example, we can add a title:
+```{r}
+d %>% 
+ggplot(aes(mpg, wt)) +
+  geom_point(aes(color = am)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "Manual cars tend to be heavier than automatic cars"
+  )
+```
+
+We can add a subtitle:
+```{r}
+d %>% 
+ggplot(aes(mpg, wt)) +
+  geom_point(aes(color = am)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "Manual cars tend to be heavier than automatic cars",
+    subtitle = "Car weight and transmission type significantly affect mpg"
+  )
+```
+
+We can even add a caption for reference information (can you find it?):
+```{r}
+d %>% 
+ggplot(aes(mpg, wt)) +
+  geom_point(aes(color = am)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "Manual cars tend to be heavier than automatic cars",
+    subtitle = "Car weight and transmission type significantly affect mpg",
+    caption = "Data from fueleconomy.gov"
+  )
+```
+
+Of course, as would be true for any good graph, we can add labels for the x and y axes (we are so fancy!!):
+
+```{r}
+
+d %>% 
+ggplot(aes(mpg, wt)) +
+  geom_point(aes(color = am)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "Manual cars tend to be heavier than automatic cars",
+    subtitle = "Car weight and transmission type significantly affect mpg",
+    caption = "Data from fueleconomy.gov",
+    x = "Average Gas Mileage (mpg)",
+    y = "Car Weight (in 1000s of pounds)"
+  )
+
+```
+
+We can also change the label for legend representing the "z" variable--that is, the factor variable that divides the data into two groups.
+```{r}
+d %>% 
+ggplot(aes(mpg, wt)) +
+  geom_point(aes(color = am)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "Manual cars tend to be heavier than automatic cars",
+    subtitle = "Car weight and transmission type significantly affect mpg",
+    caption = "Data from fueleconomy.gov",
+    x = "Average Gas Mileage (mpg)",
+    y = "Car Weight (in 1000s)",
+    color = "Transmission Type"
+  )
+```
+
+Along with the label for the legend, we can, with a little effort outside of ggplot, change the names for each of its constituent levels, as well:
+
+```{r}
+d %<>% mutate(
+  am = factor(am, labels = c("Manual", "Automatic"))
+)
+
+d %>% 
+ggplot(aes(mpg, wt)) +
+  geom_point(aes(color = am)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "Manual cars tend to be heavier than automatic cars",
+    subtitle = "Car weight and transmission type significantly affect mpg",
+    caption = "Data from fueleconomy.gov",
+    x = "Average Gas Mileage (mpg)",
+    y = "Car Weight (in 1000s)",
+    color = "Transmission Type"
+  )
+
+```
+
+What if you want to change the position of the legend, or remove it completely? Easy! Just use the legend.position argument inside the theme function. Try `legend.position = "none"` and see what happens.
+
+```{r}
+d %>% 
+ggplot(aes(mpg, wt)) +
+  geom_point(aes(color = am)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "Manual cars tend to be heavier than automatic cars",
+    subtitle = "Car weight and transmission type significantly affect mpg",
+    caption = "Data from fueleconomy.gov",
+    x = "Average Gas Mileage (mpg)",
+    y = "Car Weight (in 1000s)",
+    color = "Transmission Type"
+  )+
+  theme(legend.position = "bottom")
+```
+Damnnnn that graph is looking sexy! Can't stop us plotting now. Can't stop won't stop...
+
+Besides the descriptive text, the other major aspect of a graph's presentation is its background. `ggplot2` has some preset [themes](https://ggplot2.tidyverse.org/reference/ggtheme.html) that you can add to your graphs to change how they look. Check some of them out below.
+
+`theme()` can also be used to tweak aspects of your graph's theme manually. Check these out! Pick your fave and remember it whenever you want to graph like a boss.
+
+```{r}
+d %>% 
+ggplot(aes(mpg, wt)) +
+  geom_point(aes(color = am)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "Manual cars tend to be heavier than automatic cars",
+    subtitle = "Car weight and transmission type significantly affect mpg",
+    caption = "Data from fueleconomy.gov",
+    x = "Average Gas Mileage (mpg)",
+    y = "Car Weight (in 1000s)",
+    color = "Transmission Type"
+  ) +
+  theme_classic()
+
+d %>% 
+ggplot(aes(mpg, wt)) +
+  geom_point(aes(color = am)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "Manual cars tend to be heavier than automatic cars",
+    subtitle = "Car weight and transmission type significantly affect mpg",
+    caption = "Data from fueleconomy.gov",
+    x = "Average Gas Mileage (mpg)",
+    y = "Car Weight (in 1000s)",
+    color = "Transmission Type"
+  ) +
+  theme_minimal()
+
+d %>% 
+ggplot(aes(mpg, wt)) +
+  geom_point(aes(color = am)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "Manual cars tend to be heavier than automatic cars",
+    subtitle = "Car weight and transmission type significantly affect mpg",
+    caption = "Data from fueleconomy.gov",
+    x = "Average Gas Mileage (mpg)",
+    y = "Car Weight (in 1000s)",
+    color = "Transmission Type"
+  ) +
+  theme_light()
+
+d %>% 
+ggplot(aes(mpg, wt)) +
+  geom_point(aes(color = am)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "Manual cars tend to be heavier than automatic cars",
+    subtitle = "Car weight and transmission type significantly affect mpg",
+    caption = "Data from fueleconomy.gov",
+    x = "Average Gas Mileage (mpg)",
+    y = "Car Weight (in 1000s)",
+    color = "Transmission Type"
+  ) +
+  theme_dark()
+
+d %>% 
+ggplot(aes(mpg, wt)) +
+  geom_point(aes(color = am)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "Manual cars tend to be heavier than automatic cars",
+    subtitle = "Car weight and transmission type significantly affect mpg",
+    caption = "Data from fueleconomy.gov",
+    x = "Average Gas Mileage (mpg)",
+    y = "Car Weight (in 1000s)",
+    color = "Transmission Type"
+  ) +
+  theme_test()
+```
+
+And there are even more themes you can get from other packages, like sjPlot and [ggthemes](https://cran.microsoft.com/snapshot/2016-12-03/web/packages/ggthemes/vignettes/ggthemes.html):
+
+```{r}
+##install.packages("sjPlot")
+library(sjPlot)
+
+
+d %>% 
+ggplot(aes(mpg, wt)) +
+  geom_point(aes(color = am)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "Manual cars tend to be heavier than automatic cars",
+    subtitle = "Car weight and transmission type significantly affect mpg",
+    caption = "Data from fueleconomy.gov",
+    x = "Average Gas Mileage (mpg)",
+    y = "Car Weight (in 1000s)",
+    color = "Transmission Type"
+  ) +
+  sjPlot::theme_sjplot()
+
+```
+
+That was a LOT. My goodness. Check out everything you did!
+
+# Review: End Notes
+
+Today, we covered:
+
+    *The basic structure of ggplots
+    *Common aesthetics
+    *Common geoms
+    *How to change the presentation of your ggplot
+
+## What's an R Markdown again? {#markdown}
+
+This is the main kind of document that I use in RStudio, and I think its one of the primary advantage of RStudio over base R console. R Markdown allows you to create a file with a mix of R code and regular text, which is useful if you want to have explanations of your code alongside the code itself. This document, for example, is an R Markdown document. It is also useful because you can export your R Markdown file to an html page or a pdf, which comes in handy when you want to share your code or a report of your analyses to someone who doesn't have R. If you're interested in learning more about the functionality of R Markdown, you can visit [this webpage](https://rmarkdown.rstudio.com/lesson-1.html)
+
+R Markdowns use **chunks** to run code. A **chunk** is designated by starting with ``` ```{r}``` and ending with ``` This is where you will write your code. A new chunk can be created by pressing COMMAND + ALT + I on Mac, or CONTROL + ALT + I on PC.
+
+You can run lines of code by highlighting them, and pressing COMMAND + ENTER on Mac, or CONTROL + ENTER on PC. If you want to run a whole chunk of code, you can press COMMAND + ALT + C on Mac, or ALT + CONTROL + ALT + C on PC. Alternatively, you can run a chunk of code by clicking the green right-facing arrow at the top-right corner of each chunk. The downward-facing arrow directly left of the green arrow will run all code up to that point.
+
+## Some useful resources to continue your learning {#resources}
+
+A useful resource, in my opinion, is the [stackoverflow](http://stackoverflow.com/) website. Because this is a general-purpose resource for programming help, it will be useful to use the R tag (`[R]`) in your queries. A related resource is the [statistics stackexchange](http://stats.stackexchange.com/), which is like Stack Overflow but focused more on the underlying statistical issues.
+
+**Add other resources**
