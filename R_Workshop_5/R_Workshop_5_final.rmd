@@ -1,5 +1,5 @@
 ---
-title: 'R Workshop 6: Group testing'
+title: 'R Workshop 5: Group testing'
 author: "Benjamin Manning"
 date: "8/2/2021"
 output: 
@@ -856,6 +856,7 @@ Let's use our trusted old friend-dataset mtcars, to try Mann-Whitney's U.
 fit = mtcars %$% wilcox.test(mpg ~ am) 
 fit
 
+
 ```
 
 As you can see, we get two pieces of output: The W statistic (equivalent to the t statistic in the t test), and its significance (the p value). If the significance is less than .05, then we know that the **mean RANKS** of mileage of automatic cars is significantly different than that of manual cars.
@@ -869,6 +870,7 @@ Let's take a look at the data:
 ```{r}
 ChickWeight <- as.tibble(ChickWeight)
 view(ChickWeight)
+
 ```
 
 As we can see, I tracked the weights of the chicks for 21 days every other day. Each weight of the chicken is NOT independent - so we'd want to do a paired test. Let's look at the difference in chick weights between days 10 and 14
@@ -881,8 +883,6 @@ ChickWeight %>%
   spread(Time, weight) %>% 
    filter(Diet == 1) %$% 
    wilcox.test(`10`,`14`,paired = T)
-
-?wilcox.test
 ```
 
 As before, we get the V statistic and its associated p-value. In this case, since *p* < .05, the chickens significantly increased in weight from day 10 to day 12.

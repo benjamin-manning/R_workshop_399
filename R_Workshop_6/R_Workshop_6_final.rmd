@@ -1,5 +1,5 @@
 ---
-title: "R Workshop 7: Correlation and Regression"
+title: "R Workshop 6: Correlation and Regression"
 author: "Benjamin Manning"
 date: "8/2/2021"
 output: 
