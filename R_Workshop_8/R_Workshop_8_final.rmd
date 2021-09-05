@@ -1,5 +1,5 @@
 ---
-title: "R Workshop"
+title: "R Workshop 8: Non-parametric Regression"
 author: "Ben Manning"
 date: "08/17/2021"
 output: 
