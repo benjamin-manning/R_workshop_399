@@ -665,12 +665,11 @@ All of these are available in the `fa()` function from thee psych package, using
 ```{r}
 principal(r = sps,nfactors = 2)
 fit = fa(r = sps,nfactors = 2,fm = "uls")
-?fa
+
 fit
 ```
 
 Here we run factor analysis and save the results in an object called `fit`.
-
 ___________________________________
 
 BONUS SECTION: ROTATIONS. If you're interested, read about rotations. This is higher level math. If you're not interested, just skip to the next block of code and run it - then continue on reading.
