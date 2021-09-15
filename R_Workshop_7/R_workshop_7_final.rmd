@@ -1,5 +1,5 @@
 ---
-title: "R Workshop 71: Mediation and Moderation"
+title: "R Workshop 7: Mediation and Moderation"
 author: "Benjamin Manning"
 date: "08/08/2021"
 output: 

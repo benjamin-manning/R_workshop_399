@@ -1,5 +1,5 @@
 ---
-title: 'R Workshop 5: Group testing'
+title: 'R Workshop 5: Group Testing'
 author: "Benjamin Manning"
 date: "8/2/2021"
 output: 

@@ -180,7 +180,7 @@ Speaking of many correlations, all of these functions are fine, but they only gi
 Amazingly, this isn't something that is very easy to do in R. In my opinion, this is super freaking dumb. There are a bunch of ways to do it - but here's just one that you can use that I like :). It's in the corrr package! You can just use it on your data. and it will give correlations between every pair of variables. You can use the `correlate()` Function:
 
 ```{r}
-#install.packages('corrr')
+#install.packages('corrr') - 
 library(corrr)
 
 correlate(gm)
