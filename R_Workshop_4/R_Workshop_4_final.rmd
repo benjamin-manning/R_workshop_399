@@ -42,7 +42,7 @@ What we'll look at here:
 
 Let's start by reading in our data:
 
-```{r load_d, include=FALSE}
+```{r load_d}
 # write csv
 write_csv(mtcars, "mtcars.csv")
 
