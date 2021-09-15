@@ -26,7 +26,7 @@ library(magrittr) # for pipes
 
 In the last tutorial, we learned a few things about mediation and moderation, two very useful techniques to multivariatly assess the relationships between variables.
 
--   Mediation looks at questions of mechanism, while moderation looks at when is an effect stronger or milder.
+-   Mediation looks at questions of mechanism, while moderation looks at when an effect is stronger or milder.
 -   We used functions mediate and lavaan to run mediation
 -   We used `lm()` to run moderation analyses.
 -   We learned why we need to center our predictors
@@ -49,13 +49,13 @@ What we'll look at here:
 
 Let's get started.
 
-# When/Why regular regression wont work
+# When/Why regular regression won't work
 
-Regular regression makes no special assumptions on how the outcome variable works. It has the full catersian coordinate system to work with: the response variable can take any value between $-\infty$ and $+\infty$. A standard linear regression could make a prediction of -24.34, +34.555555, $\pi$, 99999, and so on.
+Regular regression makes no special assumptions on how the outcome variable works. It has the full cartersian coordinate system to work with: the response variable can take any value between $-\infty$ and $+\infty$. A standard linear regression could make a prediction of -24.34, +34.555555, $\pi$, 99999, and so on.
 
-While this is **definitely** useful, it is not always realistic. Sometimes, our outcome variable is not a continuous variable. Lets see some examples.
+While this is **definitely** useful, it is not always realistic. Sometimes, our outcome variable is not a continuous variable. Let's see some examples.
 
-1.  We want to predict whether or not a student will graduate, based on her SAT score. Graduation, or not, is a binary variable, that is it is either `TRUE` (1), or `FALSE` (0). Ultimately, this means that the regression will predict a probability from 0 - 1 that a student will graduate. For the purpose of this exercise, I we will generate SAT scores distributed around 1300 just to visualize a regression. I randomly made up this regression (pretend it's real): 
+1.  We want to predict whether or not a student will graduate, based on her SAT score. Graduation, or not, is a binary variable. That is, it is either `TRUE` (1), or `FALSE` (0). Ultimately, this means that the regression will predict a probability from 0 - 1 that a student will graduate. For the purpose of this exercise,  we will generate SAT scores distributed around 1300 just to visualize a regression. I randomly made up this regression (pretend it's real): 
 
 $P(gradation) = \beta_0 + \beta_1 \times SATscore$ where $\beta_1 = .3$ and $\beta_0$ is determined through a sample.
 
@@ -76,13 +76,14 @@ data_frame(SAT = rnorm(200,1300,100),
   geom_vline(xintercept = 1600,linetype="dashed", color = 'green') +
   geom_vline(xintercept = 1100,linetype="dashed", color = 'green')
 ```
-hmmmmmmm, so what do we see here? It looks like that the dotted lines indicate when the probability of graduating is equal to zero (SA ~ 1185) and when the probablity of graduating is equal to 1 (SAT ~ 1425). But, the line is also making predictions that are below 0 and above 1!! What does this mean? Well, at SAT = 1600 (green dashed line on right), our regression is predicting that the probability of graduating is roughly 1.75! Then, at SAT = 1100 (green dashed line on left) our regression is predicting that the probability of graduating is roughly -0.4. If your thinking that probabilities must ALWAYS be between 0 and 1, then you're correct! This is a limitation of linear regression - it is inherently a line, so it can't take into account the real-world fact that probabilities have to be between 0 and 1!
 
-How do we solve this problem? There are actually many ways to fix this, but I will just show you a few like logistic regression, which basically forces all the predictions of our regression between 0 and 1. Specifically, it fits a special S- shaped curve that can never exceed 0 or 1.
+hmmmmmmm, so what do we see here? It looks like that the dotted lines indicate when the probability of graduating is equal to zero (SA ~ 1185) and when the probability of graduating is equal to 1 (SAT ~ 1425). But, the line is also making predictions that are below 0 and above 1!! What does this mean? Well, at SAT = 1600 (green dashed line on right), our regression is predicting that the probability of graduating is roughly 1.75! Then, at SAT = 1100 (green dashed line on left) our regression is predicting that the probability of graduating is roughly -0.4. If you're thinking that probabilities must ALWAYS be between 0 and 1, then you're correct! This is a limitation of linear regression - it is inherently a line, so it can't take into account the real-world fact that probabilities have to be between 0 and 1!
 
-Here is another scenario were linear regression wouldn't work:
+How do we solve this problem? There are actually many ways to fix this, but I will just show you a few like logistic regression, which basically forces all the predictions of our regression between 0 and 1. Specifically, it fits a special S-Shaped curve that can never exceed 0 or 1.
 
-We want to predict the amount of times a student raises his hand during a lesson. This is a count variable, and as such, it has two important characteristics that differentiate it from normal regression. It can not take negative numbers (It wouldn't make sense for the model to predict -2 participation in class), and it can only take integer values (Nobody can participate 3 *and a half* times). We use Poisson regression to solve these sorts of data conundrums.
+Here is another scenario where linear regression wouldn't work:
+
+We want to predict the amount of times a student raises his hand during a lesson. This is a count variable, and as such, it has two important characteristics that differentiate it from normal regression. It cannot take negative numbers (It wouldn't make sense for the model to predict -2 participation in class), and it can only take integer values (Nobody can participate 3 *and a half* times). We use Poisson regression to solve these sorts of data conundrums.
 
 There are a number of different special models to model specific data types. I hope this section has convinced you that linear regression (sadly) cannot be a panacea that solves all of our data problems.
 
@@ -92,7 +93,7 @@ Like we described above, we may need to use different types of regression models
 
 Why's it called "logistic"? And how does it work?
 
-Before we get to that, let's re-visit why it's even necessary - just to drive home the point.. Logistic regression is necessary because using normal linear regression--which gives us linear, continuous predictions--doesn't make sense when the outcome is either 0 or 1. As we pointed out in the previous section, beside just being illogical to try and put two distinct categories on a linear line, linear predictions can give us predicted values below 0 and above 1. These predictions aren't interpretable because they are outside the range of possible values.
+Before we get to that, let's re-visit why it's even necessary - just to drive home the point.. Logistic regression is necessary because using normal linear regression--which gives us linear, continuous predictions--doesn't make sense when the outcome is either 0 or 1. As we pointed out in the previous section, beside just being illogical to try and put two distinct categories on a line, linear predictions can give us predicted values below 0 and above 1. These predictions aren't interpretable because they are outside the range of possible values.
 
 So, to solve this problem, statisticians have created a regression line that is squished between 0 and 1. Here's a comparison between linear and logistic regression:
 
@@ -137,17 +138,17 @@ cwb %$% lm(job ~ grit_8) %>% summary
 cwb %$% glm(job ~ grit_8, family = "binomial") %>% summary
 ```
 
-We can see the output is familiar, but uses a few new terms and the values are legitimately different!. You can see where we would normally have info on our residuals we have *deviance residuals*--this is calculated differently from residuals in linear regression, but uses the same principle: with our estimation of the regression, we are trying to minimize the residuals. You might also notice that it says "Dispersion parameter for binomial family taken to be 1". Instead of the trying to mo minimize the residuals to a line, we are minimizing to the S-Shaped crurve!, Also, we'll talk more about *dispersion parameters* later--they are more important for Poisson models. For now, don't worry about these terms too much. Instead let's focus on the coefficient of our effect.
+We can see the output is familiar, but uses a few new terms and the values are legitimately different!. You can see where we would normally have info on our residuals we have *deviance residuals*--this is calculated differently from residuals in linear regression, but uses the same principle: with our estimation of the regression, we are trying to minimize the residuals. You might also notice that it says "Dispersion parameter for binomial family taken to be 1". Instead of the trying to minimize the residuals to a line, we are minimizing to the S-Shaped crurve!, Also, we'll talk more about *dispersion parameters* later--they are more important for Poisson models. For now, don't worry about these terms too much. Instead let's focus on the coefficient of our effect.
 
 It looks as though the effect of grit on whether adolescents have part-time jobs is significant, as represented by the very, very small p-value. The coefficient for this effect is 0.3296 for logistic regression.
 
 Great. And what does that mean?
 
-Well, for linear regression were the coefficient is 0.049, wee would interpret this as "on average, a one unit increase in grit score is associated with 0.049 percentage point increase probability of having a part time job. As we mentioned earlier, this doesn't really work because if we keep adding or subtracting 0.049 we will break zero or one - a mathematical impossibility.
+Well, for linear regression where the coefficient is 0.049, wee would interpret this as "on average, a one unit increase in grit score is associated with 0.049 percentage point increase probability of having a part time job. As we mentioned earlier, this doesn't really work because if we keep adding or subtracting 0.049 we will break zero or one - a mathematical impossibility.
 
 How about logistic regression? What's the 0.3296 stand for. Welp.....
 
-...I don't know. And pretty much no one else does either. I mean they do know, but it's not easy to wrap ones head around!
+...I don't know. And pretty much no one else does either. I mean they do know, but it's not easy to wrap one's head around!
 
 Why? Because this coefficient of grit_8 in the regression, is the log of the odds of getting a 1 vs. getting a 0. If you remember, we took the log of the odds to fit the curve between 0 and 1, but this transformation is not intuitive or easy to interpret. Here's how the log of the odds is computed:
 
@@ -180,7 +181,7 @@ You'll notice this is exactly the same as our equation above, except without `lo
 But first, how do we get rid of `log()`? Again, reach deep into the recesses of your mind and recall that the reciprocal of the logarithmic function is the exponential function. Sooo if we exponentiate the log of the odds, we end up with the odds ratio. Boom! 
 
 So, in sum: In order to accurately model regression models with binary outcomes, we need to squish the prediction line to be between 0 and 1. We can do that by taking the log of the odds. This gives us a coefficient that represents the increase in the log of the odds given a one unit increase in X. Because this is not easily interpretable, we exponentiate the log of the odds, getting rid of the log function, and leaving us with a ratio of the odds of getting 1 to the odds of getting 0: the odds ratio. 
-In short, do some funky transformations to model your regression correctly and then get rid of those funky transformations to make it interpretable. Not too bad. This is confusing and hard - honestly, it's not totally comprehendable by just reading my words on this page! If you truly want to understand logistic regression (also sometimes called logit) - you should take psych stats or econometrics :). Finally, if you want to just know the actually formula for a logistic regression next to a linear regression. Here you go! Then, we'll get back to R
+In short, do some funky transformations to model your regression correctly and then get rid of those funky transformations to make it interpretable. Not too bad. This is confusing and hard - honestly, it's not totally comprehendioble by just reading my words on this page! If you truly want to understand logistic regression (also sometimes called logit) - you should take psych stats or econometrics :). Finally, if you want to just know the actual formula for a logistic regression next to a linear regression. Here you go! Then, we'll get back to R.
 
 Linear Regression formula:
 $y = \beta_0 + \beta_1X_1 + \beta_2X_2 + ... + \beta_nXn$
@@ -203,7 +204,7 @@ exp(coef(mod1))
 ```
 So, what does this mean? We can interpret it directly as the odds rather than as the log of the odds: on average, a one unit increase in grit associates with the odds of having a job being 1.39 times higher than not having a job. That's a mouthful!
 
-Unlike a normal regression, where a coefficient of 0 indicates "no effect", a coefficient of 1 indicates "no effect" for odds ratios. Why? "1" means that the odds of having a job or not having a job are the same; a person is no more likely to have one than not have one. Why is this? because multiplying any numver by 1 is the same as adding 0 - nothing happens! Our logistic regression coefficient is a multiplier times the odds.
+Unlike a normal regression, where a coefficient of 0 indicates "no effect", a coefficient of 1 indicates "no effect" for odds ratios. Why? "1" means that the odds of having a job or not having a job are the same; a person is no more likely to have one than not have one. Why is this? because multiplying any number by 1 is the same as adding 0 - nothing happens! Our logistic regression coefficient is a multiplier times the odds.
 
 Because 1 means "no effect", an odds ratio higher than 1 means the odds are higher that a person has a job, and an odds ratio lower than 1 means the odds are higher that they don't have a job. While we get very explicitly interpretations from linear regression, logistic regression tends to be more amorphous. A value of the coefficent that's HUGE means a large effect, very negative is an inverse effect, and close to 1 is no effect. We can also always look at the statistical significance too. This is a lot of info, which is great, but the cost of logistic regression is interperetability
 
@@ -232,7 +233,7 @@ Assumptions
 
 ## An example
 
-Let's model the number of scolarship offers (the counting number) a highschool baseball player gets depending on their division (A, B or C) and their SAT score (scaled from 0 - 100)
+Let's model the number of scholarship offers (the counting number) a highschool baseball player gets depending on their division (A, B or C) and their SAT score (scaled from 0 - 100)
 
 Here's the data
 
@@ -283,7 +284,7 @@ The coefficients on binary predictors (dummy-coded divisions) are interpreted si
 
 You may have noticed that, as opposed to `lm()`, we don't get an F-statistic testing the whole model, nor an $R^2$ value. We do however,  get two relevant things, that *sorta* do the same thing.
 
-Akaike Information Criterion, AIC, is a measure of model fit with two important charactersitics:
+Akaike Information Criterion, AIC, is a measure of model fit with two important characteristics:
 
 1.  They test parsimonious model fit: That is to avoid overfitting, they have a penalty for more complicated models. Basically, is the number of predictors helpful versus the predictive power that they provide.
 2.  They are not interpretable by themselves. They are only useful to compare models drawn from the same data.
@@ -310,7 +311,8 @@ broom::augment(model) %>%
   geom_point(position = position_jitter(height = .15))+
   geom_line(aes(y = exp(.fitted)))
 ```
-That is one sexy plot! Really let's us see how both division and exam score matter.
+
+That is one sexy plot! Really lets us see how both division and exam score matter.
 
 ### Testing assumptions
 
@@ -372,13 +374,13 @@ summary(model.nb)
 
 As you can see, the resulting model is very similar to the poisson model output, with one extra parameter: The Theta Parameter. All this number does is model the overdispersion of the data, removing the assumption that the dispersion = 1 required by poisson regression.
 
-As with all models so far, exponentiating the coefficients aids in interpretation. All our odds ratios are lower than 1, meaning that all these variables have a *negative* effect on the outcome variable. Increasing one point in a math test is associated with a diminshed probability of missing an extra day by around 1%. Being male, is associated with the likelihood of missing an extra day reducing by ~19%. Remember, if the exponentiated coefficient equals 1, then that means that there is **no change.**
+As with all models so far, exponentiating the coefficients aids in interpretation. All our odds ratios are lower than 1, meaning that all these variables have a *negative* effect on the outcome variable. Increasing one point in a math test is associated with a diminished probability of missing an extra day by around 1%. Being male, is associated with the likelihood of missing an extra day reducing by ~19%. Remember, if the exponentiated coefficient equals 1, then that means that there is **no change.**
 
 ```{r}
 exp(coef(model.nb))
 ```
 
-**Practice:** Modify the code for the poisson figure, to make a figure for this model. Hint: remember to change the variable names. Hint2: If the lines look chunky, its because you must plot both categorical variables in the plot. I suggest plotting one in the color aesthetic and the other based on faceting. Hint: If all else fails, see the last chunk of this markdown.
+**Practice:** Modify the code for the poisson figure, to make a figure for this model. Hint: remember to change the variable names. Hint2: If the lines look chunky, it's because you must plot both categorical variables in the plot. I suggest plotting one in the color aesthetic and the other based on faceting. Hint: If all else fails, see the last chunk of this markdown.
 
 ```{r}
 
