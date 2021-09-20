@@ -46,6 +46,7 @@ To start off, click the little green arrow (pointing to the right) in the box be
 
 
 ```{r install packages for later}
+#UNCOMMENT!!!
 install.packages("psych")
 install.packages("tidyverse") #Once downloaded, comment out
 ```

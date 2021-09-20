@@ -374,16 +374,17 @@ MO_Detection = function (CompleteDataset, AnalyzedDataset, alpha = 0.001) {
 
 Please don't worry if you don't understand that function. All that really matters is that you can run the next cell and comprehend the output. I apologize for the complexity! Life is hard. The output is easy. Someday, it'll all just be over as the dark nothingness takes us all eventually... I kid, I kid. Kind of.
 
-Let's try removing multivariate outliers from our Growth Mindset Intervention Study. The `MO_Detection` function takes as input the complete dataset, the dataset with the variables we'll use (only numeric variables), and the alpha level (set as default at the .001 level).
+Let's try removing multivariate outliers from our Growth Mindset Intervention Study. The `MO_Detection` function takes as input the complete dataset, the dataset with the variables we'll use (only numeric variables), and the alpha level.
 
 ```{r}
-gm_noout = MO_Detection(gm, gm[7:9],alpha =0.001)
+gm_noout = MO_Detection(gm, gm[7:9],alpha =.5)
 ```
 
-Explore: Try changing the alpha value to something even more improbable (say 0.00000000001), or more probable (say .30) and see how changing that parameter affects how many values are classified as outliers. (Note that .001 is customary).
+Explore: Try changing the alpha value to something even more improbable (say 0.001), or more probable (say .80) and see how changing that parameter affects how many values are classified as outliers. (Note that .001 is customary).
 
 ```{r}
-gm_noout = MO_Detection(gm, gm[7:9],alpha =0.00000001)
+gm_noout = MO_Detection(gm, gm[7:9],alpha = 0.01)
+#gm_noout = MO_Detection(gm, gm[7:9],alpha = 0.8)
 ```
 That code didn't work did it? That's because with that alpha value, there were no outliers to graph!!!!
 
@@ -529,8 +530,8 @@ Factor analysis, and related techniques, help us answer all of these BIG questio
 Let's start by loading our data.
 
 ```{r}
-sps = (read.csv("Confidence in Science.csv"))
-View(sps)
+sps <- read_csv("Confidence in Science.csv")
+view(sps)
 ```
 
 If you didn't, go ACTUALLY LOOK AT THE DATA! We want to combine allll that info into a single measure of "confidence in science". Pretty nuts that we can do this with math! And do a pretty good job!!!
