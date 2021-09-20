@@ -59,6 +59,7 @@ You can run lines of code from your script by highlighting them, and pressing CO
 13 / 2
 2 ^ 6
 5 * (2 + 3)
+angela_age
 x <- 'nate'
 
 ```
@@ -292,7 +293,7 @@ cat(a) #outputs the object together
 sum(a)
 mean(a)
 sd(a) #Reports standard deviation
-?cat
+?c
 ```
 
 Applied example:
@@ -520,7 +521,6 @@ You can also look at values for certain *groups* in your data. Below are a few f
 
 ```{r}
 describeBy(d$mpg, d$am) # from the "psych" package
-
 ```
 
 A slightly more complicated, but useful example of grouping statistics is the function `xtabs()`. The code can be understood as meaning "the *sum* of `mpg`, for each group created by `cyl` by `am`". Because `cyl` has 3 groups and `am` has 2 groups, `xtabs()` will return a 6-cell table with the *sums* of `mpg` for each of those groups; this can be useful for eyeballing differences in means. Notice also that we were able to use the option `data = dataset` (here, data = d) instead of `dataset$variable_name` to individually call each of the variables used in the function. 
